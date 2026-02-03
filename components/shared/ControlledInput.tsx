@@ -1,5 +1,5 @@
 import React from "react";
-import { Input, InputField } from "@/components/ui/input";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { IControlledInput } from "@/types/components/shared/controlled-input";
 import { useFormContext, Controller } from "react-hook-form";
 import {
@@ -21,6 +21,7 @@ const ControlledInput = ({
   placeholder,
   helperText,
   className,
+  suffix,
 }: IControlledInput) => {
   const { control } = useFormContext();
 
@@ -42,6 +43,11 @@ const ControlledInput = ({
               value={value}
               onChangeText={onChange}
             />
+            {!!suffix && (
+              <InputSlot onPress={suffix.onPress} className="pr-3">
+                <InputIcon as={suffix.icon} />
+              </InputSlot>
+            )}
           </Input>
           {helperText && (
             <FormControlHelper>

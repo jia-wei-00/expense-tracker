@@ -1,4 +1,4 @@
-import storage from "@/lib/store";
+import storage from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";

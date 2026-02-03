@@ -1,33 +1,19 @@
 import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import { create } from "zustand";
-
-export type TSignInPayload = {
-  email: string;
-  password: string;
-};
-
-interface IAuthStore {
-  isAuthLoading: boolean;
-  /**
-   * Inherit Supabase onAuthStateChange will update the session store
-   */
-  onAuthStageChange: () => void;
-  /**
-   * Sign in a user with email and password
-   * @param email
-   * @param password
-   */
-  signIn: (payload: TSignInPayload) => Promise<void>;
-  signOut: () => Promise<void>;
-}
+import type { IAuthStore } from "@/types/store/useAuth";
 
 /**
  * useAuth contain all the session related state and functions
  */
 export const useAuthStore = create<IAuthStore>((set) => ({
   isAuthLoading: false,
-  onAuthStageChange: () => {
+  initialize: async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    useSessionStore.getState().setSession(session);
+
     supabase.auth.onAuthStateChange((_event, session) => {
       useSessionStore.getState().setSession(session);
     });

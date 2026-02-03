@@ -1,15 +1,7 @@
 import { supabase } from "@/lib/supabase";
-import { AuthError, Session } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 import { create } from "zustand";
-
-type TSession = Session | null;
-
-interface ISessionStore {
-  session: TSession;
-  isSessionLoading: boolean;
-  setSession: (session: TSession) => void;
-  getSession: () => Promise<void>;
-}
+import type { ISessionStore } from "@/types/store/useSession";
 
 /**
  * useSession contain all the session related state and functions
@@ -37,4 +29,5 @@ export const useSessionStore = create<ISessionStore>((set, get) => ({
       set({ isSessionLoading: false });
     }
   },
+  getUserId: () => get().session?.user.id,
 }));
