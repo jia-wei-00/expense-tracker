@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/form-control";
 import { AlertCircleIcon } from "@/components/ui/icon";
 
+/**
+ * Please wrap this component with FormProvider. It uses useFormContext to get form methods
+ */
 const ControlledInput = ({
   label,
   name,

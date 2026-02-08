@@ -15,23 +15,26 @@ const Container = ({
   className?: string;
   title?: string;
 }) => {
-  const { scrollHandler, translateY, opacity } = useFadeHeader();
+  const { scrollHandler, animatedHeaderStyle } = useFadeHeader();
 
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      className={twJoin("flex-1", className)}
-    >
-      <Animated.View style={{ translateY, opacity }} className="z-50">
-        <Box className="bg-background-0 p-4 shadow-lg absolute top-0 left-0 right-0">
+    <SafeAreaView edges={["top", "left", "right"]} className="flex-1">
+      <Animated.View style={animatedHeaderStyle} className="z-50">
+        <Box className="bg-background-0 p-4 absolute top-0 left-0 right-0 border-b border-outline-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
           <Heading>{title}</Heading>
         </Box>
       </Animated.View>
       <Animated.ScrollView
-        className="flex-1 px-2"
+        className={twJoin("px-3", className)}
         onScroll={!!title ? scrollHandler : undefined}
+        contentContainerStyle={{ paddingBottom: 12 }}
         scrollEventThrottle={16}
       >
+        {title && (
+          <Heading size="2xl" className="my-5">
+            {title}
+          </Heading>
+        )}
         {children}
       </Animated.ScrollView>
     </SafeAreaView>

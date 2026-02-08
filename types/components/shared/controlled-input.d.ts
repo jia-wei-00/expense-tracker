@@ -1,5 +1,6 @@
 import type { FieldValues, ControllerProps } from "react-hook-form";
 import type { ElementType } from "react";
+import type { LucideIcon } from "lucide-react-native";
 
 export interface IControlledInput {
   name: string;
@@ -13,6 +14,6 @@ export interface IControlledInput {
    */
   suffix?: {
     onPress: () => void;
-    icon: ElementType;
+    icon: LucideIcon;
   };
 }

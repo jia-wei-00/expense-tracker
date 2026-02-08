@@ -1,3 +1,4 @@
+import { Database } from "@/database.types";
 import storage from "@/lib/storage";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,11 +10,15 @@ if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error("Supabase URL or Publishable Key is not defined");
 }
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
-  auth: {
-    storage: storage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
+export const supabase = createClient<Database>(
+  supabaseUrl,
+  supabasePublishableKey,
+  {
+    auth: {
+      storage: storage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
   },
-});
+);

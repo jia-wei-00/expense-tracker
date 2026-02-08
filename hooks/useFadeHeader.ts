@@ -1,23 +1,39 @@
+// hooks/useFadeHeader.ts
 import {
   useAnimatedScrollHandler,
-  useDerivedValue,
   useSharedValue,
+  useAnimatedStyle,
+  withTiming,
 } from "react-native-reanimated";
 
-export const useFadeHeader = (threshold = 100) => {
+const THRESHOLD = 100;
+
+export const useFadeHeader = () => {
   const scrollY = useSharedValue(0);
+  const headerTranslateY = useSharedValue(-60); // start hidden above
+  const headerOpacity = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
+
+      const shouldShow = scrollY.value >= THRESHOLD;
+
+      // show when >= 100, hide when < 100
+      headerTranslateY.value = withTiming(shouldShow ? 0 : -60, {
+        duration: 200,
+      });
+      headerOpacity.value = withTiming(shouldShow ? 1 : 0, { duration: 200 });
     },
   });
-  const translateY = useDerivedValue(() => {
-    const isShow = scrollY.value > threshold;
-    return isShow ? 0 : scrollY.value - 100;
-  });
-  const opacity = useDerivedValue(() => {
-    return scrollY.value / (threshold + 20);
-  });
-  return { translateY, scrollHandler, opacity };
+
+  const animatedHeaderStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: headerTranslateY.value }],
+    opacity: headerOpacity.value,
+  }));
+
+  return {
+    scrollHandler,
+    animatedHeaderStyle,
+  };
 };
