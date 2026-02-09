@@ -12,6 +12,9 @@ import { Box } from "@/components/ui/box";
 import TransactionItem from "@/components/shared/TransactionItem";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
+import { Fab, FabIcon } from "@/components/ui/fab";
+import { Plus } from "lucide-react-native";
+import { VStack } from "@/components/ui/vstack";
 
 const Home = () => {
   const currentMonth = dayjs().format("MMMM YYYY");
@@ -29,32 +32,44 @@ const Home = () => {
   };
 
   return (
-    <Container title={t("insights")}>
-      <View className="gap-2">
-        <Text bold size="lg">
-          {currentMonth}
-        </Text>
-        <View>
-          <View className="flex-row items-center justify-between">
+    <>
+      <Container title={t("insights")}>
+        <View className="gap-2">
+          <Text bold size="lg">
+            {currentMonth}
+          </Text>
+          <VStack space="sm">
             <Text size="lg" bold>
               {t("recent.transaction")}
             </Text>
-            <Button variant="link" onPress={handleViewAll}>
-              <ButtonText>{t("view.all")}</ButtonText>
-            </Button>
-          </View>
-          <Box className="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2">
-            <FlashList
-              data={expenses?.slice(0, 10)}
-              ItemSeparatorComponent={() => <Divider className="my-2" />}
-              ListEmptyComponent={<Text>{t("no.expenses")}</Text>}
-              renderItem={({ item }) => <TransactionItem {...item} />}
-              keyExtractor={(item) => item.id.toString()}
-            />
-          </Box>
+            <Box className="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2">
+              <FlashList
+                data={expenses?.slice(0, 10)}
+                ItemSeparatorComponent={() => <Divider className="my-2" />}
+                ListEmptyComponent={<Text>{t("no.expenses")}</Text>}
+                renderItem={({ item }) => <TransactionItem {...item} />}
+                keyExtractor={(item) => item.id.toString()}
+              />
+              <Button
+                variant="link"
+                className="rounded-full my-1"
+                onPress={handleViewAll}
+                size="sm"
+              >
+                <ButtonText>{t("view.all")}</ButtonText>
+              </Button>
+            </Box>
+          </VStack>
         </View>
-      </View>
-    </Container>
+      </Container>
+      <Fab
+        size="lg"
+        placement="bottom right"
+        onPress={() => router.push("/(tabs)/add")}
+      >
+        <FabIcon as={Plus} />
+      </Fab>
+    </>
   );
 };
 

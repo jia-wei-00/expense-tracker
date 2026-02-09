@@ -1,6 +1,5 @@
 import React from "react";
-import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { IControlledInput } from "@/types/components/shared/controlled-input";
+import type { IControlledDropdown } from "@/types/components/shared/controlled-dropdown";
 import { useFormContext, Controller } from "react-hook-form";
 import {
   FormControl,
@@ -13,20 +12,29 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { AlertCircleIcon } from "@/components/ui/icon";
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectIcon,
+  SelectInput,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 /**
  * Please wrap this component with FormProvider. It uses useFormContext to get form methods
  */
-const ControlledInput = ({
+const ControlledDropdown = ({
   label,
   name,
-  type = "text",
   placeholder,
+  variant,
   helperText,
-  className,
-  suffix,
-  ...props
-}: IControlledInput) => {
+}: IControlledDropdown) => {
   const { control } = useFormContext();
 
   return (
@@ -40,20 +48,28 @@ const ControlledInput = ({
               <FormControlLabelText>{label}</FormControlLabelText>
             </FormControlLabel>
           )}
-          <Input className={className} size="md">
-            <InputField
-              type={type}
-              placeholder={placeholder}
-              value={value}
-              onChangeText={onChange}
-              {...props}
-            />
-            {!!suffix && (
-              <InputSlot onPress={suffix.onPress} className="pr-3">
-                <InputIcon as={suffix.icon} />
-              </InputSlot>
-            )}
-          </Input>
+          <Select>
+            <SelectTrigger variant={variant} size="md">
+              <SelectInput placeholder={placeholder} />
+              {/* <SelectIcon className="mr-3" as={ChevronDownIcon} /> */}
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectBackdrop />
+              <SelectContent>
+                <SelectDragIndicatorWrapper>
+                  <SelectDragIndicator />
+                </SelectDragIndicatorWrapper>
+                <SelectItem label="UX Research" value="ux" />
+                <SelectItem label="Web Development" value="web" />
+                <SelectItem
+                  label="Cross Platform Development Process"
+                  value="Cross Platform Development Process"
+                />
+                <SelectItem label="UI Designing" value="ui" isDisabled={true} />
+                <SelectItem label="Backend Development" value="backend" />
+              </SelectContent>
+            </SelectPortal>
+          </Select>
           {helperText && (
             <FormControlHelper>
               <FormControlHelperText>{helperText}</FormControlHelperText>
@@ -76,4 +92,4 @@ const ControlledInput = ({
   );
 };
 
-export default ControlledInput;
+export default ControlledDropdown;
