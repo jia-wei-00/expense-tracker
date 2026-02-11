@@ -1,8 +1,7 @@
 import Container from "@/components/shared/Container";
 import ControlledDropdown from "@/components/shared/ControlledDropdown";
 import ControlledInput from "@/components/shared/ControlledInput";
-import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 import { useCategoryStore } from "@/store/useCategory";
 import { addExpenseSchema, TAddExpense } from "@/types/page/add-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +12,7 @@ import { useTranslation } from "react-i18next";
 const AddExpense = () => {
   const { t } = useTranslation("add");
   const category = useCategoryStore((state) => state.category);
+
   const methods = useForm<TAddExpense>({
     resolver: zodResolver(addExpenseSchema),
     defaultValues: {
@@ -27,18 +27,34 @@ const AddExpense = () => {
         <ControlledInput
           label={t("name")}
           name="name"
+          variant="underlined"
           placeholder="e.g Chicken rice"
         />
         <ControlledInput
           inputMode="decimal"
           placeholder="0.00"
           label={t("amount")}
+          variant="underlined"
           name="amount"
         />
-        <ControlledDropdown label={t("type")} name="type" />
-        <ControlledInput label={t("type")} name="type" />
-        <ControlledInput label={t("spend.date")} name="spend_date" />
-
+        <ControlledDropdown
+          label={t("category")}
+          name="category"
+          variant="underlined"
+          placeholder="Select a category"
+          items={category?.map((category) => ({
+            label: category.name || "",
+            value: category.id.toString(),
+          }))}
+        />
+        <ControlledInput label={t("type")} name="type" variant="underlined" />
+        <ControlledDropdown
+          label={t("spend.date")}
+          name="spend_date"
+          variant="underlined"
+          placeholder="Select a date"
+          isCalendar
+        />
         <Button
           variant="solid"
           size="md"

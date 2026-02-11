@@ -21,6 +21,7 @@ const ActionSheet = ({
   secondaryButtonLabel,
   primaryButtonAction,
   secondaryButtonAction,
+  children,
 }: IActionsheetProps) => {
   return (
     <Actionsheet isOpen={isOpen} onClose={onClose}>
@@ -29,10 +30,16 @@ const ActionSheet = ({
         <ActionsheetDragIndicatorWrapper>
           <ActionsheetDragIndicator />
         </ActionsheetDragIndicatorWrapper>
-        <Heading size="lg" className="my-3">
-          {title}
-        </Heading>
-        <Text className="my-2">{description}</Text>
+        {!!children ? (
+          children
+        ) : (
+          <>
+            <Heading size="lg" className="my-3">
+              {title}
+            </Heading>
+            <Text className="my-2">{description}</Text>
+          </>
+        )}
         <Button
           variant="solid"
           size="md"

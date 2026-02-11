@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { IControlledDropdown } from "@/types/components/shared/controlled-dropdown";
 import { useFormContext, Controller } from "react-hook-form";
 import {
@@ -11,7 +11,7 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
-import { AlertCircleIcon } from "@/components/ui/icon";
+import { AlertCircleIcon, ChevronDownIcon } from "@/components/ui/icon";
 import {
   Select,
   SelectBackdrop,
@@ -24,6 +24,8 @@ import {
   SelectPortal,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Box } from "@/components/ui/box";
+import { Calendar } from "react-native-calendars";
 
 /**
  * Please wrap this component with FormProvider. It uses useFormContext to get form methods
@@ -34,8 +36,11 @@ const ControlledDropdown = ({
   placeholder,
   variant,
   helperText,
+  items,
+  isCalendar = false,
 }: IControlledDropdown) => {
   const { control } = useFormContext();
+  const [selected, setSelected] = useState("");
 
   return (
     <Controller
@@ -48,10 +53,14 @@ const ControlledDropdown = ({
               <FormControlLabelText>{label}</FormControlLabelText>
             </FormControlLabel>
           )}
-          <Select>
+          <Select onValueChange={onChange}>
             <SelectTrigger variant={variant} size="md">
-              <SelectInput placeholder={placeholder} />
-              {/* <SelectIcon className="mr-3" as={ChevronDownIcon} /> */}
+              <SelectInput
+                placeholder={placeholder}
+                {...(isCalendar && { value: selected })}
+                className="flex-1"
+              />
+              <SelectIcon className="mr-3" as={ChevronDownIcon} />
             </SelectTrigger>
             <SelectPortal>
               <SelectBackdrop />
@@ -59,14 +68,31 @@ const ControlledDropdown = ({
                 <SelectDragIndicatorWrapper>
                   <SelectDragIndicator />
                 </SelectDragIndicatorWrapper>
-                <SelectItem label="UX Research" value="ux" />
-                <SelectItem label="Web Development" value="web" />
-                <SelectItem
-                  label="Cross Platform Development Process"
-                  value="Cross Platform Development Process"
-                />
-                <SelectItem label="UI Designing" value="ui" isDisabled={true} />
-                <SelectItem label="Backend Development" value="backend" />
+                {isCalendar ? (
+                  <Box className="w-full min-h-40 p-2">
+                    <Calendar
+                      onDayPress={({ timestamp, dateString }) => {
+                        setSelected(dateString);
+                        onChange(new Date(timestamp).toISOString());
+                      }}
+                      markedDates={{
+                        [selected]: {
+                          selected: true,
+                          disableTouchEvent: true,
+                        },
+                      }}
+                      style={{
+                        borderRadius: 10,
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  items?.map(({ label, value }) => {
+                    return (
+                      <SelectItem label={label} value={value} key={value} />
+                    );
+                  })
+                )}
               </SelectContent>
             </SelectPortal>
           </Select>

@@ -25,6 +25,8 @@ const ControlledInput = ({
   helperText,
   className,
   suffix,
+  isDisabled = false,
+  variant = "outline",
   ...props
 }: IControlledInput) => {
   const { control } = useFormContext();
@@ -40,7 +42,12 @@ const ControlledInput = ({
               <FormControlLabelText>{label}</FormControlLabelText>
             </FormControlLabel>
           )}
-          <Input className={className} size="md">
+          <Input
+            className={className}
+            size="md"
+            variant={variant}
+            isDisabled={isDisabled}
+          >
             <InputField
               type={type}
               placeholder={placeholder}
