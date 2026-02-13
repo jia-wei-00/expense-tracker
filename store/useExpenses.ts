@@ -60,7 +60,20 @@ export const useExpensesStore = create<IExpensesStore>()(
           set({ isFetching: false });
         }
       },
-      deleteExpense: async (id: number) => {
+      addExpense: async (expense) => {
+        set({ isFetching: true });
+        try {
+          const { data, error } = await supabase
+            .from("expense")
+            .insert(expense);
+          if (error) throw error;
+        } catch {
+          // TODO: show error toast
+        } finally {
+          set({ isFetching: false });
+        }
+      },
+      deleteExpense: async (id) => {
         set({ isFetching: true });
         try {
           const { error } = await supabase

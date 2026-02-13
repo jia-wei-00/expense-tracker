@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Box } from "@/components/ui/box";
 import { Calendar } from "react-native-calendars";
+import dayjs from "dayjs";
 
 /**
  * Please wrap this component with FormProvider. It uses useFormContext to get form methods
@@ -40,13 +41,13 @@ const ControlledDropdown = ({
   isCalendar = false,
 }: IControlledDropdown) => {
   const { control } = useFormContext();
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState(dayjs().format("YYYY-MM-DD"));
 
   return (
     <Controller
       control={control}
       name={name}
-      render={({ field: { onChange, value }, fieldState: { error } }) => (
+      render={({ field: { onChange }, fieldState: { error } }) => (
         <FormControl isInvalid={!!error?.message}>
           {label && (
             <FormControlLabel>

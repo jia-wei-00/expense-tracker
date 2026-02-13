@@ -1,4 +1,4 @@
-export interface IControlledDropdown {
+export interface IControlledRadio {
   name: string;
   label?: string;
   variant?: "underlined" | "outline" | "rounded" | undefined;

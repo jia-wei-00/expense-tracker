@@ -12,5 +12,6 @@ export interface IExpensesStore {
   setExpenses: (expenses: IExpense[]) => void;
   getExpenses: () => Promise<void>;
   getExpenseById: (id: number) => Promise<IExpense | undefined>;
+  addExpense: (expense: TExpense) => Promise<void>;
   deleteExpense: (id: number) => Promise<void>;
 }
