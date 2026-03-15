@@ -1,62 +1,91 @@
 import { supabase } from "@/lib/supabase";
-import { useCategoryStore } from "@/store/useCategory";
-import { useExpensesStore } from "@/store/useExpenses";
 import { useSessionStore } from "@/store/useSession";
-import { TExpense } from "@/types/store/useExpenses";
+import { IExpense, TExpense } from "@/types/store/useExpenses";
+import { useQueryClient, InfiniteData } from "@tanstack/react-query";
+import { QUERY_KEY } from "@/constants/query-key";
+import { useInfiniteExpenses } from "@/hooks/useExpenses";
+import { TCategory } from "@/types/store/useCategory";
 import { useEffect } from "react";
 
 export const useExpenseSubscription = () => {
-  const userId = useSessionStore.getState().getUserId();
-  const expenses = useExpensesStore((state) => state.expenses);
-  const setExpenses = useExpensesStore((state) => state.setExpenses);
-  const category = useCategoryStore((state) => state.category);
-  const getCategoryNameById = useCategoryStore(
-    (state) => state.getCategoryNameById,
-  );
+  const userId = useSessionStore((state) => state.getUserId());
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!category) useCategoryStore.getState().getCategory();
-  }, [category]);
+    if (!userId) return;
 
-  const subscribeToExpense = supabase.channel(userId + "_expense").on<TExpense>(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "expense",
-    },
-    (payload) => {
-      const { eventType, new: expense, old } = payload;
+    const channel = supabase
+      .channel(`${userId}_expense`)
+      .on<TExpense>(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "expense" },
+        (payload) => {
+          const { eventType, new: expense, old } = payload;
 
-      switch (eventType) {
-        case "INSERT":
-          const modifiedExpense = {
-            ...expense,
-            category: getCategoryNameById(expense.category) ?? "Uncategorized",
+          const getCategoryName = (categoryId: number | null) => {
+            const categories = queryClient.getQueryData<TCategory[]>([
+              QUERY_KEY.CATEGORIES,
+              userId,
+            ]);
+            if (!categoryId || !categories) return "Uncategorized";
+            return (
+              categories.find((c) => c.id === categoryId)?.name ??
+              "Uncategorized"
+            );
           };
 
-          if (!expenses) return setExpenses([modifiedExpense]);
-          setExpenses([modifiedExpense, ...expenses]);
-          break;
-        case "UPDATE":
-          if (!expenses) return;
-          setExpenses(
-            expenses.map((expense) =>
-              expense.id === old.id ? modifiedExpense : expense,
-            ),
-          );
-          break;
-        case "DELETE":
-          if (!expenses) return;
-          setExpenses(expenses?.filter((expense) => expense.id !== old.id));
-          break;
-        default:
-          console.log("Unknown event type");
-      }
-    },
-  );
+          queryClient.setQueryData<InfiniteData<IExpense[]>>(
+            [QUERY_KEY.EXPENSES, userId],
+            (oldData) => {
+              if (!oldData) return oldData;
 
-  return {
-    subscribeToExpense,
-  };
+              switch (eventType) {
+                case "INSERT": {
+                  const newExpense = {
+                    ...expense,
+                    category: getCategoryName(expense.category),
+                  };
+                  const isDupe = oldData.pages.some((page) =>
+                    page.some((e) => e.id === newExpense.id),
+                  );
+                  if (isDupe) return oldData;
+                  return {
+                    ...oldData,
+                    pages: oldData.pages.map((page, i) =>
+                      i === 0 ? [newExpense, ...page] : page,
+                    ),
+                  };
+                }
+                case "UPDATE": {
+                  const updatedExpense = {
+                    ...expense,
+                    category: getCategoryName(expense.category),
+                  };
+                  return {
+                    ...oldData,
+                    pages: oldData.pages.map((page) =>
+                      page.map((e) => (e.id === old.id ? updatedExpense : e)),
+                    ),
+                  };
+                }
+                case "DELETE":
+                  return {
+                    ...oldData,
+                    pages: oldData.pages.map((page) =>
+                      page.filter((e) => e.id !== old.id),
+                    ),
+                  };
+                default:
+                  return oldData;
+              }
+            },
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
 };

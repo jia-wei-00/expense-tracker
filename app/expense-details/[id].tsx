@@ -8,7 +8,7 @@ import { Icon } from "@/components/ui/icon";
 import { Box } from "@/components/ui/box";
 import { Center } from "@/components/ui/center";
 import dayjs from "dayjs";
-import { useExpensesStore } from "@/store/useExpenses";
+import { useDeleteExpense, useExpenseById } from "@/hooks/useExpenses";
 import { IExpense } from "@/types/store/useExpenses";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
@@ -27,19 +27,9 @@ const ExpenseDetails = () => {
 
   const { t } = useTranslation("common");
   const [isOpened, setIsOpened] = useState(false);
-  const [expense, setExpense] = useState<IExpense | undefined>(undefined);
-  const getExpenseById = useExpensesStore((state) => state.getExpenseById);
-  const isLoading = useExpensesStore((state) => state.isFetching);
-  const deleteExpense = useExpensesStore((state) => state.deleteExpense);
-
-  const handleExpense = async () => {
-    const expense = await getExpenseById(Number(id));
-    setExpense(expense);
-  };
-
-  React.useEffect(() => {
-    handleExpense();
-  }, [id]);
+  const expense = useExpenseById(Number(id));
+  const { mutateAsync: deleteExpense, isPending: isDeleting } =
+    useDeleteExpense();
 
   const date = dayjs(expense?.spend_date).format("dddd • YYYY-MM-DD");
 
@@ -51,9 +41,16 @@ const ExpenseDetails = () => {
   const IconComponent = CATEGORY_ICON_MAP[safeCategory];
   const prefix = expense?.is_expense ? "-" : "+";
 
-  const handleDeleteExpense = () => {
-    deleteExpense(Number(id));
+  const handleDeleteExpense = async () => {
+    await deleteExpense(Number(id));
     router.back();
+  };
+
+  const handlePress = () => {
+    router.push({
+      pathname: "/expense-details/update",
+      params: { id: String(id) },
+    });
   };
 
   return (
@@ -78,6 +75,9 @@ const ExpenseDetails = () => {
           <Text size="xl" bold className="text-center">
             {expense?.name}
           </Text>
+          <Text size="xs" className="text-center">
+            {expense?.category}
+          </Text>
           <Text className="text-center" size="lg">
             {date}
           </Text>
@@ -88,7 +88,7 @@ const ExpenseDetails = () => {
             Note
           </Text>
         </Box>
-        <Button className="rounded-full">
+        <Button className="rounded-full" onPress={handlePress}>
           <ButtonText>{t("update")}</ButtonText>
         </Button>
         <Button
@@ -106,8 +106,8 @@ const ExpenseDetails = () => {
         isOpen={isOpened}
         onClose={() => setIsOpened(false)}
         description={t("delete.confirmation.message", { item: expense?.name })}
-        isLoading={isLoading}
-        primaryButtonLabel={t(isLoading ? "deleting" : "delete")}
+        isLoading={isDeleting}
+        primaryButtonLabel={t(isDeleting ? "deleting" : "delete")}
         primaryButtonAction={handleDeleteExpense}
         secondaryButtonLabel={t("cancel")}
         secondaryButtonAction={() => setIsOpened(false)}

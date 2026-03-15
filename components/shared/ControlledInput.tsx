@@ -13,6 +13,7 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { AlertCircleIcon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
 
 /**
  * Please wrap this component with FormProvider. It uses useFormContext to get form methods
@@ -27,9 +28,18 @@ const ControlledInput = ({
   suffix,
   isDisabled = false,
   variant = "outline",
+  prefix,
+  valueType = "string",
   ...props
 }: IControlledInput) => {
   const { control } = useFormContext();
+
+  const handleChange = (value: string) => {
+    if (valueType === "number") {
+      return Number(value);
+    }
+    return value;
+  };
 
   return (
     <Controller
@@ -48,11 +58,16 @@ const ControlledInput = ({
             variant={variant}
             isDisabled={isDisabled}
           >
+            {!!prefix && (
+              <InputSlot className="px-2">
+                <Text>{prefix}</Text>
+              </InputSlot>
+            )}
             <InputField
               type={type}
               placeholder={placeholder}
-              value={value}
-              onChangeText={onChange}
+              value={value?.toString()}
+              onChangeText={(value) => onChange(handleChange(value))}
               {...props}
             />
             {!!suffix && (

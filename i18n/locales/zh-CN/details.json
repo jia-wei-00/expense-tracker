@@ -1,0 +1,19 @@
+{
+  "add.expense": "添加支出",
+  "update.expense": "更新支出",
+  "name": "名称",
+  "amount": "金额",
+  "category": "类别",
+  "type": "类型",
+  "spend.date": "支出日期",
+  "expense": "支出",
+  "income": "收入",
+  "add.loading": "添加中...",
+  "update.loading": "更新中...",
+  "validation.name_required": "名称是必填的",
+  "validation.amount_required": "金额是必填的",
+  "validation.max_2_decimals": "金额最多可以有2位小数",
+  "validation.must_be_positive": "金额必须是正数",
+  "validation.category_required": "类别是必填的",
+  "validation.type_required": "类型是必填的"
+}

@@ -1,6 +1,5 @@
 import { Tabs } from "expo-router";
 import React, { use, useEffect } from "react";
-
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
@@ -9,20 +8,12 @@ import { useSessionStore } from "@/store/useSession";
 import { useExpenseSubscription } from "@/hooks/useExpenseSubscription";
 import { Icon } from "@/components/ui/icon";
 import { LayoutDashboard, PlusCircle, Settings } from "lucide-react-native";
+import { useCategorySubscription } from "@/hooks/useCategorySubscription";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const userId = useSessionStore((state) => state.getUserId());
-  const { subscribeToExpense } = useExpenseSubscription();
-
-  useEffect(() => {
-    if (!userId) return;
-    subscribeToExpense.subscribe();
-
-    return () => {
-      subscribeToExpense.unsubscribe();
-    };
-  }, [userId]);
+  useExpenseSubscription();
+  useCategorySubscription();
 
   return (
     <Tabs

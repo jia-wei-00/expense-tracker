@@ -1,3 +1,5 @@
+import { TValueType } from "@/types/components/shared/controlled-radio";
+
 export interface IControlledDropdown {
   name: string;
   label?: string;
@@ -6,4 +8,6 @@ export interface IControlledDropdown {
   helperText?: string;
   items?: Array<{ label: string; value: string }> | undefined;
   isCalendar?: boolean;
+  valueType?: TValueType;
+  displayValue?: string;
 }

@@ -15,6 +15,16 @@ import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
 import { useAuthStore } from "@/store/useAuth";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+    },
+  },
+});
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -33,19 +43,21 @@ export default function RootLayout() {
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <SafeAreaProvider>
-          <Stack>
-            <Stack.Protected guard={!session}>
-              <Stack.Screen name="login" />
-            </Stack.Protected>
+          <QueryClientProvider client={queryClient}>
+            <Stack>
+              <Stack.Protected guard={!session}>
+                <Stack.Screen name="login" />
+              </Stack.Protected>
 
-            <Stack.Protected guard={!!session}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="modal"
-                options={{ presentation: "modal", title: "Modal" }}
-              />
-            </Stack.Protected>
-          </Stack>
+              <Stack.Protected guard={!!session}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="modal"
+                  options={{ presentation: "modal", title: "Modal" }}
+                />
+              </Stack.Protected>
+            </Stack>
+          </QueryClientProvider>
         </SafeAreaProvider>
         <StatusBar style="auto" />
       </ThemeProvider>

@@ -12,8 +12,10 @@ export interface IControlledInput extends Omit<
   label?: string;
   placeholder?: string;
   className?: string;
+  prefix?: string;
   helperText?: string;
   isDisabled?: boolean;
+  valueType?: "string" | "number";
   /**
    * icon to be displayed at the end of the input
    */

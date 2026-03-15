@@ -1,0 +1,19 @@
+{
+  "add.expense": "Add Expense",
+  "update.expense": "Update Expense",
+  "name": "Name",
+  "amount": "Amount",
+  "category": "Category",
+  "type": "Type",
+  "spend.date": "Spend Date",
+  "add.loading": "Adding...",
+  "update.loading": "Updating...",
+  "expense": "Expense",
+  "income": "Income",
+  "validation.name_required": "Name is required",
+  "validation.amount_required": "Amount is required",
+  "validation.max_2_decimals": "Amount must have at most 2 decimal places",
+  "validation.must_be_positive": "Amount must be positive",
+  "validation.category_required": "Category is required",
+  "validation.type_required": "Type is required"
+}

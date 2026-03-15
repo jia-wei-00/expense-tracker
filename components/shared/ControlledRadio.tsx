@@ -19,7 +19,10 @@ import {
   RadioIndicator,
   RadioLabel,
 } from "@/components/ui/radio";
-import { IControlledRadio } from "@/types/components/shared/controlled-radio";
+import {
+  IControlledRadio,
+  TValueType,
+} from "@/types/components/shared/controlled-radio";
 
 /**
  * Please wrap this component with FormProvider. It uses useFormContext to get form methods
@@ -29,8 +32,19 @@ const ControlledDropdown = ({
   name,
   helperText,
   items,
+  valueType = "string",
 }: IControlledRadio) => {
   const { control } = useFormContext();
+
+  const handleChange = (value: string) => {
+    if (valueType === "number") {
+      return Number(value);
+    }
+    if (valueType === "boolean") {
+      return value === "true";
+    }
+    return value;
+  };
 
   return (
     <Controller
@@ -44,12 +58,15 @@ const ControlledDropdown = ({
             </FormControlLabel>
           )}
           <HStack>
-            <RadioGroup value={value} onChange={onChange}>
+            <RadioGroup
+              value={String(value)}
+              onChange={(value) => onChange(handleChange(value))}
+            >
               <HStack space="md">
                 {items?.map(({ label, value }) => (
                   <Radio
-                    key={value}
-                    value={value}
+                    key={String(value)}
+                    value={String(value)}
                     size="sm"
                     isInvalid={!!error?.message}
                     isDisabled={false}
@@ -75,7 +92,7 @@ const ControlledDropdown = ({
                 className="text-red-500"
               />
               <FormControlErrorText className="text-red-500">
-                {error.message as string}
+                {error.message}
               </FormControlErrorText>
             </FormControlError>
           )}

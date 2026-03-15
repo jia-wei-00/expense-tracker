@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import { create } from "zustand";
 import type { IAuthStore } from "@/types/store/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * useAuth contain all the session related state and functions
@@ -14,9 +15,11 @@ export const useAuthStore = create<IAuthStore>((set) => ({
     } = await supabase.auth.getSession();
     useSessionStore.getState().setSession(session);
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      useSessionStore.getState().setSession(session);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        useSessionStore.getState().setSession(session);
+      },
+    );
   },
   signIn: async ({ email, password }) => {
     try {
@@ -35,6 +38,8 @@ export const useAuthStore = create<IAuthStore>((set) => ({
     }
   },
   signOut: async () => {
+    // const queryClient = useQueryClient();
+
     try {
       set({ isAuthLoading: true });
       const { error } = await supabase.auth.signOut();
@@ -45,6 +50,7 @@ export const useAuthStore = create<IAuthStore>((set) => ({
       throw error;
     } finally {
       useSessionStore.getState().setSession(null);
+      // queryClient.clear();
       set({ isAuthLoading: false });
     }
   },

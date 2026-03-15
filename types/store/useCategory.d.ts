@@ -1,6 +1,6 @@
 import type { Database } from "@/database.types";
 
-type TCategory = Database["public"]["Tables"]["expense_category"]["Row"];
+export type TCategory = Database["public"]["Tables"]["expense_category"]["Row"];
 
 export interface ICategoryStore {
   category: TCategory[] | null;
