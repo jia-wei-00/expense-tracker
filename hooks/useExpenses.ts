@@ -10,6 +10,61 @@ import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import { IExpense, TAddExpense } from "@/types/store/useExpenses";
 import { QUERY_KEY } from "@/constants/query-key";
+import dayjs from "dayjs";
+import { TMonthlySummary } from "@/types/hooks/use-expense";
+
+// need to refactor this, we just have to fetch limit data to 5 and then
+export const useFetchMonthlyExpenses = (month: string | Date) => {
+  const userId = useSessionStore((state) => state.getUserId());
+  const monthKey = dayjs(month).format("YYYY-MM");
+
+  return useQuery({
+    queryKey: [monthKey],
+    queryFn: async () => {
+      const startOfMonth = dayjs().startOf("month").toISOString();
+      const startOfNextMonth = dayjs()
+        .add(1, "month")
+        .startOf("month")
+        .toISOString();
+
+      const { data, error } = await supabase
+        .from("expense")
+        .select(
+          `
+            amount,
+            is_expense,
+            expense_category (
+              name
+            )
+          `,
+        )
+        .gte("spend_date", startOfMonth)
+        .lt("spend_date", startOfNextMonth);
+
+      if (error) throw error;
+
+      const result: TMonthlySummary = {
+        expense: [],
+        income: [],
+      };
+
+      for (const row of data ?? []) {
+        const categoryName = String(row.expense_category?.name);
+        const entry = { [categoryName]: Number(row.amount) };
+
+        if (row.is_expense) {
+          result.expense.push(entry);
+        } else {
+          result.income.push(entry);
+        }
+      }
+
+      return result;
+    },
+    enabled: !!userId && !!month,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
 
 export const useInfiniteExpenses = (
   limit = 15,
@@ -50,6 +105,7 @@ export const useExpenseById = (id: number) => {
 };
 
 export const useAddExpense = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (expense: TAddExpense) => {
       const { data, error } = await supabase
@@ -58,6 +114,18 @@ export const useAddExpense = () => {
         .select();
       if (error) throw error;
       return data;
+    },
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        const isCurrentMonth = dayjs(data[0].spend_date).isSame(
+          dayjs(),
+          "month",
+        );
+        if (isCurrentMonth) {
+          const monthKey = dayjs(data[0].spend_date).format("YYYY-MM");
+          queryClient.invalidateQueries({ queryKey: [monthKey] });
+        }
+      }
     },
   });
 };

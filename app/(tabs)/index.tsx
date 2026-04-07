@@ -5,8 +5,10 @@ import { router } from "expo-router";
 import Container from "@/components/shared/Container";
 import { useTranslation } from "react-i18next";
 import { FlashList } from "@shopify/flash-list";
-import { useInfiniteExpenses } from "@/hooks/useExpenses";
-import { useSessionStore } from "@/store/useSession";
+import {
+  useFetchMonthlyExpenses,
+  useInfiniteExpenses,
+} from "@/hooks/useExpenses";
 import { View } from "react-native";
 import { Box } from "@/components/ui/box";
 import TransactionItem from "@/components/shared/TransactionItem";
@@ -15,12 +17,15 @@ import { Divider } from "@/components/ui/divider";
 import { Fab, FabIcon } from "@/components/ui/fab";
 import { Plus } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
+import Chart from "@/components/home/chart";
+import { HStack } from "@/components/ui/hstack";
 
 const Home = () => {
   const currentMonth = dayjs().format("MMMM YYYY");
   const { t } = useTranslation("home");
   const { data: expensesData } = useInfiniteExpenses();
   const expenses = expensesData?.pages.flat() || [];
+  const { data } = useFetchMonthlyExpenses(dayjs().toDate());
 
   const handleViewAll = () => {
     router.push("/(tabs)/explore");
@@ -33,13 +38,14 @@ const Home = () => {
           <Text bold size="lg">
             {currentMonth}
           </Text>
+          <Chart />
           <VStack space="sm">
             <Text size="lg" bold>
               {t("recent.transaction")}
             </Text>
             <Box className="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2">
               <FlashList
-                data={expenses.slice(0, 10)}
+                data={expenses.slice(0, 5)}
                 ItemSeparatorComponent={() => <Divider className="my-2" />}
                 ListEmptyComponent={<Text>{t("no.expenses")}</Text>}
                 renderItem={({ item }) => <TransactionItem {...item} />}

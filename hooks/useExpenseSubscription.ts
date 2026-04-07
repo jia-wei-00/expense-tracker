@@ -3,7 +3,6 @@ import { useSessionStore } from "@/store/useSession";
 import { IExpense, TExpense } from "@/types/store/useExpenses";
 import { useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/constants/query-key";
-import { useInfiniteExpenses } from "@/hooks/useExpenses";
 import { TCategory } from "@/types/store/useCategory";
 import { useEffect } from "react";
 
