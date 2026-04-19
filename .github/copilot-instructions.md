@@ -58,6 +58,21 @@ Always export both `Input` and `Output` types when the schema uses `.transform()
 
 **Mutation input vs response data**: Supabase `.delete()` (without `.select()`) returns `null` — you cannot read deleted row fields from `onSuccess(data)`. When post-delete logic depends on fields from the deleted row (e.g., to conditionally invalidate a month-based query key), pass those fields as part of the mutation input variables and read them via `onSuccess(_, variables)`.
 
+**Query keys**: All TanStack Query keys are defined in `constants/query-key.ts` as `QUERY_KEY.*`. Monthly expense summaries use a `"YYYY-MM"` string directly as the key.
+
+**FlashList separators**: Always define `ItemSeparatorComponent` as a stable named component outside the main function — never as an inline arrow function. An inline `() => <.../>` is recreated on every render, causing FlashList to skip separator rendering entirely. Pattern:
+```tsx
+const Separator = () => <Box className="h-2" />;
+// then inside JSX:
+<FlashList ItemSeparatorComponent={Separator} ... />
+```
+
+**Nested Stack layouts / double headers**: When adding a `_layout.tsx` inside a sub-directory (e.g. `app/expense/_layout.tsx`), the root `app/_layout.tsx` Stack will also render a header for that segment. Prevent the double header by adding `headerShown: false` on the root Stack screen for that segment:
+```tsx
+<Stack.Screen name="expense" options={{ headerShown: false }} />
+```
+Screen titles inside the nested layout use the `common` namespace (e.g. `t("expense.add")`).
+
 **TypeScript**: Never use `as` type casts. They silence TypeScript errors and hide bugs in downstream code — if a cast seems necessary, fix the type definition or use a type guard instead.
 
 **Environment variables**: Must be prefixed `EXPO_PUBLIC_` to be exposed to the app.

@@ -5,10 +5,7 @@ import { router } from "expo-router";
 import Container from "@/components/shared/Container";
 import { useTranslation } from "react-i18next";
 import { FlashList } from "@shopify/flash-list";
-import {
-  useFetchMonthlyExpenses,
-  useInfiniteExpenses,
-} from "@/hooks/useExpenses";
+import { useInfiniteExpenses } from "@/hooks/useExpenses";
 import { View } from "react-native";
 import { Box } from "@/components/ui/box";
 import TransactionItem from "@/components/shared/TransactionItem";
@@ -18,14 +15,12 @@ import { Fab, FabIcon } from "@/components/ui/fab";
 import { Plus } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
 import Chart from "@/components/home/chart";
-import { HStack } from "@/components/ui/hstack";
 
 const Home = () => {
   const currentMonth = dayjs().format("MMMM YYYY");
   const { t } = useTranslation("home");
   const { data: expensesData } = useInfiniteExpenses();
   const expenses = expensesData?.pages.flat() || [];
-  const { data } = useFetchMonthlyExpenses(dayjs().toDate());
 
   const handleViewAll = () => {
     router.push("/(tabs)/explore");
