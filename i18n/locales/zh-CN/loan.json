@@ -1,0 +1,23 @@
+{
+  "loans": "贷款",
+  "add.loan": "添加贷款",
+  "add.record": "添加还款",
+  "adding": "添加中...",
+  "loan.name": "贷款名称",
+  "total.amount": "贷款金额",
+  "interest.rate": "利率 (%)",
+  "paid.amount": "已还",
+  "remaining": "剩余",
+  "payment.amount": "还款金额",
+  "payment.date": "还款日期",
+  "no.loans": "暂无贷款",
+  "no.records": "暂无还款记录",
+  "created.on": "创建于 {{date}}",
+  "delete.loan": "删除贷款",
+  "delete.record": "删除记录",
+  "payments": "还款记录",
+  "optional": "(可选)",
+  "total": "总计",
+  "validation.name_required": "贷款名称不可为空",
+  "validation.amount_required": "金额不可为空"
+}

@@ -10,6 +10,7 @@ import { useFormContext } from "react-hook-form";
 
 const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
   const { t } = useTranslation("details");
+  const { t: tCommon } = useTranslation("common");
   const { data: category } = useCategory();
   const { watch } = useFormContext();
 
@@ -26,21 +27,24 @@ const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
   }, [filteredCategory, watch("category")]);
 
   return (
-    <VStack space="lg">
+    <VStack
+      space="lg"
+      className="bg-background-0 p-5 rounded-2xl border border-outline-50 gap-2"
+    >
       <ControlledInput
         label={t("name")}
         name="name"
         variant="underlined"
-        placeholder="e.g Chicken rice"
+        placeholder={t("placeholder.name")}
       />
       <ControlledInput
         inputMode="decimal"
-        placeholder="0.00"
+        placeholder={t("placeholder.amount")}
         label={t("amount")}
         valueType="number"
         variant="underlined"
         name="amount"
-        prefix="RM"
+        prefix={tCommon("currency.prefix")}
       />
       <ControlledRadio
         label={t("type")}
@@ -56,7 +60,7 @@ const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
         label={t("category")}
         name="category"
         variant="underlined"
-        placeholder="Select a category"
+        placeholder={t("placeholder.category")}
         items={filteredCategory?.map((category) => ({
           label: category.name || "",
           value: category.id.toString(),
@@ -68,7 +72,7 @@ const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
         label={t("spend.date")}
         name="spend_date"
         variant="underlined"
-        placeholder="Select a date"
+        placeholder={t("placeholder.date")}
         isCalendar
       />
       {children}

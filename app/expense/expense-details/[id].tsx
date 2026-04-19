@@ -42,7 +42,7 @@ const ExpenseDetails = () => {
   const prefix = expense?.is_expense ? "-" : "+";
 
   const handleDeleteExpense = async () => {
-    await deleteExpense(Number(id));
+    await deleteExpense({ id: Number(id), spend_date: expense?.spend_date ?? "" });
     router.back();
   };
 
@@ -66,7 +66,7 @@ const ExpenseDetails = () => {
           <HStack space="xs">
             <Text size="4xl" bold className="text-center">
               {prefix}
-              RM
+              {t("currency.prefix")}
             </Text>
             <Text size="4xl" bold className="text-center">
               {expense?.amount}
@@ -85,7 +85,7 @@ const ExpenseDetails = () => {
 
         <Box className="bg-background-50 p-5 rounded-xl">
           <Text size="lg" bold>
-            Note
+            {t("note")}
           </Text>
         </Box>
         <Button className="rounded-full" onPress={handlePress}>

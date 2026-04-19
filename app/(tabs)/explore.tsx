@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Text } from "@/components/ui/text";
-import Container from "@/components/shared/Container";
 import { FlashList } from "@shopify/flash-list";
-import { View } from "react-native";
-import { Box } from "@/components/ui/box";
-import TransactionItem from "@/components/shared/TransactionItem";
-import { Button, ButtonText } from "@/components/ui/button";
+import Animated from "react-native-reanimated";
 import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
+import TransactionItem from "@/components/shared/TransactionItem";
+import Container from "@/components/shared/Container";
 import { useTranslation } from "react-i18next";
 import { useInfiniteExpenses } from "@/hooks/useExpenses";
+import type { IExpense } from "@/types/store/useExpenses";
+import { Fab, FabIcon } from "@/components/ui/fab";
+import { Plus } from "lucide-react-native";
+import { router } from "expo-router";
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<IExpense>);
+
+const Separator = () => <Divider className="my-2" />;
 
 const History = () => {
   const { t } = useTranslation("home");
@@ -19,36 +25,53 @@ const History = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteExpenses();
-  const expenses = expensesData?.pages.flat() || [];
+
+  const expenses = useMemo(
+    () => expensesData?.pages.flat() ?? [],
+    [expensesData],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: IExpense }) => <TransactionItem {...item} />,
+    [],
+  );
+
+  const ListFooter = isFetchingNextPage ? (
+    <Text className="text-center py-2">{t("loading")}</Text>
+  ) : hasNextPage ? null : (
+    <Text className="text-center py-2">{t("list.end")}</Text>
+  );
 
   return (
-    <Container title={t("history")}>
-      <View className="gap-2">
-        <VStack space="sm">
-          <Text size="lg" bold>
-            {t("transaction history")}
-          </Text>
-          <Box className="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2">
-            <FlashList
-              data={expenses}
-              ItemSeparatorComponent={() => <Divider className="my-2" />}
-              ListEmptyComponent={<Text>{t("no.expenses")}</Text>}
-              renderItem={({ item }) => <TransactionItem {...item} />}
-              keyExtractor={(item) => item.id.toString()}
-              onEndReached={fetchNextPage}
-              onEndReachedThreshold={0.5}
-              ListFooterComponent={
-                isFetchingNextPage ? (
-                  <Text>Loading...</Text>
-                ) : hasNextPage ? null : (
-                  <Text>End</Text>
-                )
-              }
-            />
-          </Box>
-        </VStack>
-      </View>
-    </Container>
+    <>
+      <Container title={t("transaction.history")}>
+        {({ scrollHandler }) => (
+          <AnimatedFlashList
+            data={expenses}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            ItemSeparatorComponent={Separator}
+            ListEmptyComponent={
+              <Text className="px-3">{t("no.expenses")}</Text>
+            }
+            ListFooterComponent={ListFooter}
+            contentContainerClassName="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2"
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+            onEndReached={fetchNextPage}
+            onEndReachedThreshold={0.5}
+          />
+        )}
+      </Container>
+
+      <Fab
+        size="lg"
+        placement="bottom right"
+        onPress={() => router.push("/expense/add")}
+      >
+        <FabIcon as={Plus} />
+      </Fab>
+    </>
   );
 };
 

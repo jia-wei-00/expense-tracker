@@ -1,8 +1,13 @@
 export type TLegend = {
+  value: number;
   label: string;
   color: string;
+  gradientCenterColor: string;
+  colorClass: string;
+  focused?: boolean;
 };
 
 export interface ILegend {
-  data: TLegend[];
+  pieData: TLegend[];
+  totalExpense: number;
 }

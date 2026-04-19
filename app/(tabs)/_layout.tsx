@@ -1,17 +1,18 @@
 import { Tabs } from "expo-router";
-import React, { use, useEffect } from "react";
+import React from "react";
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSessionStore } from "@/store/useSession";
 import { useExpenseSubscription } from "@/hooks/useExpenseSubscription";
 import { Icon } from "@/components/ui/icon";
-import { LayoutDashboard, PlusCircle, Settings } from "lucide-react-native";
+import { LayoutDashboard, CreditCard, History, Settings } from "lucide-react-native";
 import { useCategorySubscription } from "@/hooks/useCategorySubscription";
+import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation("common");
   useExpenseSubscription();
   useCategorySubscription();
 
@@ -26,28 +27,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t("tab.home"),
           tabBarIcon: ({ color }) => <Icon as={LayoutDashboard} />,
         }}
       />
       <Tabs.Screen
-        name="add"
+        name="loan"
         options={{
-          title: "Add",
-          tabBarIcon: ({ color }) => <Icon as={PlusCircle} />,
+          title: t("tab.loan"),
+          tabBarIcon: ({ color }) => <Icon as={CreditCard} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => <Icon as={Settings} />,
+          title: t("tab.explore"),
+          tabBarIcon: ({ color }) => <Icon as={History} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: t("tab.settings"),
           tabBarIcon: ({ color }) => <Icon as={Settings} />,
         }}
       />

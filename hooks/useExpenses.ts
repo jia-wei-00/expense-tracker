@@ -131,6 +131,7 @@ export const useAddExpense = () => {
 };
 
 export const useUpdateExpense = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (expense: TAddExpense) => {
       if (!expense.id) return;
@@ -142,14 +143,33 @@ export const useUpdateExpense = () => {
       if (error) throw error;
       return data;
     },
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        const isCurrentMonth = dayjs(data[0].spend_date).isSame(
+          dayjs(),
+          "month",
+        );
+        if (isCurrentMonth) {
+          const monthKey = dayjs(data[0].spend_date).format("YYYY-MM");
+          queryClient.invalidateQueries({ queryKey: [monthKey] });
+        }
+      }
+    },
   });
 };
 
 export const useDeleteExpense = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({ id }: { id: number; spend_date: string }) => {
       const { error } = await supabase.from("expense").delete().eq("id", id);
       if (error) throw error;
+    },
+    onSuccess: (_, { spend_date }) => {
+      if (dayjs(spend_date).isSame(dayjs(), "month")) {
+        const monthKey = dayjs(spend_date).format("YYYY-MM");
+        queryClient.invalidateQueries({ queryKey: [monthKey] });
+      }
     },
   });
 };

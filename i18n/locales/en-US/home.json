@@ -1,5 +1,13 @@
 {
   "insights": "Insights",
   "recent.transaction": "Recent transactions",
-  "view.all": "View all"
+  "view.all": "View all",
+  "no.expenses": "No expenses found",
+  "transaction.history": "Transaction History",
+  "loading": "Loading...",
+  "list.end": "End",
+  "chart.expense.title": "Monthly Expenses",
+  "chart.income.title": "Monthly Income",
+  "chart.total": "Total RM{{total}}",
+  "chart.empty": "No data found"
 }

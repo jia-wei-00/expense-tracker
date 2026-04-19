@@ -24,7 +24,7 @@ const Settings = () => {
           action="primary"
           onPress={() => setIsOpened(true)}
         >
-          <ButtonText>Click me</ButtonText>
+          <ButtonText>{t("logout")}</ButtonText>
         </Button>
       </Center>
       <ActionSheet

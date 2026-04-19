@@ -11,6 +11,7 @@ import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import dayjs from "dayjs";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 const TransactionItem = ({
   id,
@@ -20,6 +21,7 @@ const TransactionItem = ({
   is_expense,
   amount,
 }: IExpense) => {
+  const { t } = useTranslation("common");
   const safeCategory = safeParseAny(categorySchema, category, "Others");
   const IconComponent = CATEGORY_ICON_MAP[safeCategory];
 
@@ -47,7 +49,8 @@ const TransactionItem = ({
           <Text
             className={is_expense ? "text-typography-600" : "text-success-600"}
           >
-            RM{amount}
+            {t("currency.prefix")}
+            {amount}
           </Text>
         </HStack>
       </HStack>
@@ -55,4 +58,4 @@ const TransactionItem = ({
   );
 };
 
-export default TransactionItem;
+export default React.memo(TransactionItem);

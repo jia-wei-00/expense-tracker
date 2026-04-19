@@ -38,12 +38,13 @@ const Home = () => {
           <Text bold size="lg">
             {currentMonth}
           </Text>
-          <Chart />
+          <Chart type="expense" />
+          <Chart type="income" />
           <VStack space="sm">
             <Text size="lg" bold>
               {t("recent.transaction")}
             </Text>
-            <Box className="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2">
+            <Box className="bg-background-0 p-3 rounded-2xl border border-outline-50">
               <FlashList
                 data={expenses.slice(0, 5)}
                 ItemSeparatorComponent={() => <Divider className="my-2" />}
@@ -66,7 +67,7 @@ const Home = () => {
       <Fab
         size="lg"
         placement="bottom right"
-        onPress={() => router.push("/(tabs)/add")}
+        onPress={() => router.push("/expense/add")}
       >
         <FabIcon as={Plus} />
       </Fab>

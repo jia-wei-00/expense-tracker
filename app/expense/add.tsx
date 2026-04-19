@@ -41,7 +41,7 @@ const AddExpense = () => {
   }, [isExpenseWatch]);
 
   return (
-    <Container title={t("add.expense")}>
+    <Container>
       <FormProvider {...methods}>
         <ExpenseForm isExpense={isExpenseWatch}>
           <Button

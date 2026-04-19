@@ -5,5 +5,13 @@
   "cancel": "Cancel",
   "confirm.delete": "Confirm Delete?",
   "deleting": "Deleting...",
-  "delete.confirmation.message": "Are you sure you want to delete this {item}?"
+  "delete.confirmation.message": "Are you sure you want to delete this {{item}}?",
+  "note": "Note",
+  "currency.prefix": "RM",
+  "tab.home": "Home",
+  "tab.add": "Add",
+  "tab.explore": "Explore",
+  "tab.settings": "Settings",
+  "tab.loan": "Loans",
+  "expense.add": "Add Expense"
 }

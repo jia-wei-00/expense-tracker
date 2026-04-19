@@ -1,5 +1,13 @@
 {
   "insights": "洞察",
   "recent.transaction": "最近交易",
-  "view.all": "查看所有"
+  "view.all": "查看所有",
+  "no.expenses": "暂无支出记录",
+  "transaction.history": "交易记录",
+  "loading": "加载中...",
+  "list.end": "已加载全部",
+  "chart.expense.title": "月度支出",
+  "chart.income.title": "月度收入",
+  "chart.total": "总计 RM{{total}}",
+  "chart.empty": "暂无数据"
 }
