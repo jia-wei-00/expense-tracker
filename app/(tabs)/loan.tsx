@@ -14,7 +14,7 @@ import { Fab, FabIcon } from "@/components/ui/fab";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<ILoan>);
 
-const Separator = () => <Box className="h-2" />;
+const Separator = () => <Box className="h-3" />;
 
 const Loans = () => {
   const { t } = useTranslation("loan");

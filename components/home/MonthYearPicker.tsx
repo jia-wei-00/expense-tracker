@@ -58,7 +58,7 @@ const MonthYearPicker = ({ value, onChange }: IMonthYearPicker) => {
         onValueChange={handleMonthChange}
         className="flex-1"
       >
-        <SelectTrigger variant="outline" size="md">
+        <SelectTrigger variant="rounded" size="md">
           <SelectInput
             placeholder={t("month")}
             value={MONTHS[selectedMonth]}
@@ -84,7 +84,7 @@ const MonthYearPicker = ({ value, onChange }: IMonthYearPicker) => {
         onValueChange={handleYearChange}
         className="flex-1"
       >
-        <SelectTrigger variant="outline" size="md">
+        <SelectTrigger variant="rounded" size="md">
           <SelectInput
             placeholder={t("year")}
             value={String(selectedYear)}
@@ -99,7 +99,11 @@ const MonthYearPicker = ({ value, onChange }: IMonthYearPicker) => {
               <SelectDragIndicator />
             </SelectDragIndicatorWrapper>
             {years.map((year) => (
-              <SelectItem key={year} label={String(year)} value={String(year)} />
+              <SelectItem
+                key={year}
+                label={String(year)}
+                value={String(year)}
+              />
             ))}
           </SelectContent>
         </SelectPortal>
