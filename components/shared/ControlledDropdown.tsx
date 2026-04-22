@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { IControlledDropdown } from "@/types/components/shared/controlled-dropdown";
-import { useFormContext, Controller } from "react-hook-form";
+import { useFormContext, Controller, useWatch } from "react-hook-form";
 import {
   FormControl,
   FormControlError,
@@ -42,23 +42,23 @@ const ControlledDropdown = ({
   valueType = "string",
   displayValue,
 }: IControlledDropdown) => {
-  const { control, watch } = useFormContext();
+  const { control } = useFormContext();
+  const watchedValue = useWatch({ control, name });
 
-  const handleChange = (value: string) => {
-    if (valueType === "number") {
-      return Number(value);
-    }
-    if (valueType === "boolean") {
-      return Boolean(value);
-    }
-    return value;
-  };
+  const handleChange = useCallback(
+    (value: string) => {
+      if (valueType === "number") return Number(value);
+      if (valueType === "boolean") return Boolean(value);
+      return value;
+    },
+    [valueType],
+  );
 
   const formattedDate = useMemo(() => {
     return isCalendar
-      ? dayjs(watch(name)).format("YYYY-MM-DD")
+      ? dayjs(watchedValue).format("YYYY-MM-DD")
       : dayjs().format("YYYY-MM-DD");
-  }, [watch(name), isCalendar]);
+  }, [watchedValue, isCalendar]);
 
   return (
     <Controller
@@ -73,18 +73,16 @@ const ControlledDropdown = ({
               </FormControlLabel>
             )}
             <Select
-              onValueChange={(value) => onChange(handleChange(value))}
+              onValueChange={(value) => {
+                onChange(handleChange(value));
+              }}
               defaultValue={value}
               selectedValue={value ? value : ""}
             >
               <SelectTrigger variant={variant} size="md">
                 <SelectInput
                   placeholder={placeholder}
-                  {...(isCalendar && {
-                    value: formattedDate,
-                  })}
-                  {...(!value && { value: "" })}
-                  {...(displayValue && { value: displayValue })}
+                  value={displayValue ?? (isCalendar ? formattedDate : (value ?? ""))}
                   className="flex-1"
                 />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -107,17 +105,13 @@ const ControlledDropdown = ({
                             disableTouchEvent: true,
                           },
                         }}
-                        style={{
-                          borderRadius: 10,
-                        }}
+                        style={{ borderRadius: 10 }}
                       />
                     </Box>
                   ) : (
-                    items?.map(({ label, value }) => {
-                      return (
-                        <SelectItem label={label} value={value} key={value} />
-                      );
-                    })
+                    items?.map(({ label, value }) => (
+                      <SelectItem label={label} value={value} key={value} />
+                    ))
                   )}
                 </SelectContent>
               </SelectPortal>

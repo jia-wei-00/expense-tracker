@@ -42,13 +42,16 @@ const ExpenseDetails = () => {
   const prefix = expense?.is_expense ? "-" : "+";
 
   const handleDeleteExpense = async () => {
-    await deleteExpense({ id: Number(id), spend_date: expense?.spend_date ?? "" });
+    await deleteExpense({
+      id: Number(id),
+      spend_date: expense?.spend_date ?? "",
+    });
     router.back();
   };
 
   const handlePress = () => {
     router.push({
-      pathname: "/expense-details/update",
+      pathname: "/expense/expense-details/update",
       params: { id: String(id) },
     });
   };

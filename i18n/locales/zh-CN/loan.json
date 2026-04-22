@@ -1,8 +1,10 @@
 {
   "loans": "贷款",
   "add.loan": "添加贷款",
+  "edit.loan": "编辑贷款",
   "add.record": "添加还款",
   "adding": "添加中...",
+  "saving": "保存中...",
   "loan.name": "贷款名称",
   "total.amount": "贷款金额",
   "interest.rate": "利率 (%)",

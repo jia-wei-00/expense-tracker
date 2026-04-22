@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
-import type { ILoan, TAddLoan, TAddLoanRecord } from "@/types/store/useLoan";
+import type { ILoan, TAddLoan, TAddLoanRecord, TUpdateLoan } from "@/types/store/useLoan";
 import { QUERY_KEY } from "@/constants/query-key";
 
 export const useLoans = () => {
@@ -54,6 +54,24 @@ export const useAddLoan = () => {
         .select();
       if (error) throw error;
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY.LOANS, userId] });
+    },
+  });
+};
+
+export const useUpdateLoan = () => {
+  const queryClient = useQueryClient();
+  const userId = useSessionStore((state) => state.getUserId());
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: TUpdateLoan) => {
+      const { error } = await supabase
+        .from("loan")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY.LOANS, userId] });

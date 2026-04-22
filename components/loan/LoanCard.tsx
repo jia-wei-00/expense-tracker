@@ -10,9 +10,10 @@ import { Heading } from "@/components/ui/heading";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { Trash2, Plus } from "lucide-react-native";
+import { Trash2, Plus, Pencil } from "lucide-react-native";
 import ActionSheet from "@/components/shared/ActionSheet";
 import AddLoanRecordModal from "@/components/loan/AddLoanRecordModal";
+import EditLoanModal from "@/components/loan/EditLoanModal";
 import { useDeleteLoan } from "@/hooks/useLoan";
 import LoanStats from "@/components/loan/LoanStats";
 import type { ILoanCard } from "@/types/components/loan/loan-card";
@@ -22,6 +23,7 @@ const LoanCard = ({ loan }: ILoanCard) => {
   const { t: tCommon } = useTranslation("common");
   const { mutateAsync: deleteLoan, isPending: isDeleting } = useDeleteLoan();
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [recordModalOpen, setRecordModalOpen] = useState(false);
 
   const handlePress = () => {
@@ -54,17 +56,28 @@ const LoanCard = ({ loan }: ILoanCard) => {
                 </Text>
               )}
             </VStack>
-            <Button
-              size="sm"
-              variant="link"
-              action="negative"
-              onPress={(e) => {
-                e.stopPropagation?.();
-                setDeleteSheetOpen(true);
-              }}
-            >
-              <Icon as={Trash2} size="sm" className="text-error-600" />
-            </Button>
+            <HStack space="xs" className="items-center">
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  setEditModalOpen(true);
+                }}
+                className="p-3 rounded-full active:bg-background-100"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon as={Pencil} size="md" className="text-typography-500" />
+              </Pressable>
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  setDeleteSheetOpen(true);
+                }}
+                className="p-3 rounded-full active:bg-error-50"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon as={Trash2} size="md" className="text-error-600" />
+              </Pressable>
+            </HStack>
           </HStack>
 
           <Box className="mb-3">
@@ -107,6 +120,12 @@ const LoanCard = ({ loan }: ILoanCard) => {
         isOpen={recordModalOpen}
         onClose={() => setRecordModalOpen(false)}
         loanId={loan.id}
+      />
+
+      <EditLoanModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        loan={loan}
       />
     </>
   );

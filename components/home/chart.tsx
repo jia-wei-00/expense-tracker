@@ -1,5 +1,4 @@
 import { useFetchMonthlyExpenses } from "@/hooks/useExpenses";
-import dayjs from "dayjs";
 import { useMemo } from "react";
 import { Text } from "@/components/ui/text";
 import { PieChart } from "react-native-gifted-charts";
@@ -10,8 +9,8 @@ import { VStack } from "@/components/ui/vstack";
 import { IChart } from "@/types/components/home/chart";
 import { useTranslation } from "react-i18next";
 
-const Chart = ({ type }: IChart) => {
-  const { data } = useFetchMonthlyExpenses(dayjs().toDate());
+const Chart = ({ type, month }: IChart) => {
+  const { data } = useFetchMonthlyExpenses(month);
   const { t } = useTranslation("home");
 
   const { pieData, total } = useMemo(() => {

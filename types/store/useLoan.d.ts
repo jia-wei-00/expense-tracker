@@ -11,6 +11,7 @@ export type TAddLoanRecord = Pick<
   "amount" | "pay_date" | "loan"
 >;
 
+export type TUpdateLoan = { id: number } & TAddLoan;
 export interface ILoan extends TLoan {
   paid_amount: number;
   remaining_amount: number;

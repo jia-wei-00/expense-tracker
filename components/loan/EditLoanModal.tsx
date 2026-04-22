@@ -17,44 +17,35 @@ import {
   ModalCloseButton,
 } from "@/components/ui/modal";
 import ControlledInput from "@/components/shared/ControlledInput";
-import ControlledDropdown from "@/components/shared/ControlledDropdown";
-import { useAddLoanRecord } from "@/hooks/useLoan";
+import { useUpdateLoan } from "@/hooks/useLoan";
 import {
-  createAddRecordSchema,
-  type TAddRecordInput,
-  type TAddRecordOutput,
+  createAddLoanSchema,
+  type TAddLoanInput,
+  type TAddLoanOutput,
 } from "@/types/page/loan-schema";
-import type { IAddLoanRecordModal } from "@/types/components/loan/add-loan-record-modal";
-import dayjs from "dayjs";
+import type { IEditLoanModal } from "@/types/components/loan/edit-loan-modal";
 
-const AddLoanRecordModal = ({
-  isOpen,
-  onClose,
-  loanId,
-}: IAddLoanRecordModal) => {
+const EditLoanModal = ({ isOpen, onClose, loan }: IEditLoanModal) => {
   const { t } = useTranslation("loan");
   const { t: tCommon } = useTranslation("common");
-  const { mutateAsync: addRecord, isPending } = useAddLoanRecord();
+  const { mutateAsync: updateLoan, isPending } = useUpdateLoan();
 
-  const methods = useForm<TAddRecordInput, unknown, TAddRecordOutput>({
-    resolver: zodResolver(createAddRecordSchema(t)),
+  const methods = useForm<TAddLoanInput, unknown, TAddLoanOutput>({
+    resolver: zodResolver(createAddLoanSchema(t)),
     defaultValues: {
-      pay_date: dayjs().toISOString(),
+      name: loan.name ?? "",
+      total_amount: loan.total_amount ?? undefined,
+      interest_rate: loan.interest_rate ?? undefined,
     },
   });
 
-  const onSubmit = async (data: TAddRecordOutput) => {
-    await addRecord({
-      amount: String(data.amount),
-      pay_date: data.pay_date,
-      loan: loanId,
-    });
-    methods.reset({ pay_date: dayjs().toISOString() });
+  const onSubmit = async (data: TAddLoanOutput) => {
+    await updateLoan({ id: loan.id, ...data });
     onClose();
   };
 
   const handleClose = () => {
-    methods.reset({ pay_date: dayjs().toISOString() });
+    methods.reset();
     onClose();
   };
 
@@ -63,7 +54,7 @@ const AddLoanRecordModal = ({
       <ModalBackdrop />
       <ModalContent>
         <ModalHeader>
-          <Heading size="md">{t("add.record")}</Heading>
+          <Heading size="md">{t("edit.loan")}</Heading>
           <ModalCloseButton onPress={handleClose}>
             <Icon as={X} size="sm" />
           </ModalCloseButton>
@@ -72,17 +63,23 @@ const AddLoanRecordModal = ({
           <FormProvider {...methods}>
             <VStack space="md">
               <ControlledInput
-                label={t("payment.amount")}
-                name="amount"
+                label={t("loan.name")}
+                name="name"
+                placeholder={t("loan.name")}
+              />
+              <ControlledInput
+                label={t("total.amount")}
+                name="total_amount"
                 placeholder="0.00"
                 keyboardType="numeric"
                 valueType="number"
               />
-              <ControlledDropdown
-                label={t("payment.date")}
-                name="pay_date"
-                placeholder={t("payment.date")}
-                isCalendar
+              <ControlledInput
+                label={`${t("interest.rate")} ${t("optional")}`}
+                name="interest_rate"
+                placeholder="0.00"
+                keyboardType="numeric"
+                valueType="number"
               />
             </VStack>
           </FormProvider>
@@ -97,7 +94,7 @@ const AddLoanRecordModal = ({
             isDisabled={isPending}
           >
             {isPending && <ButtonSpinner color="gray" />}
-            <ButtonText>{t(isPending ? "adding" : "add.record")}</ButtonText>
+            <ButtonText>{t(isPending ? "saving" : "edit.loan")}</ButtonText>
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -105,4 +102,4 @@ const AddLoanRecordModal = ({
   );
 };
 
-export default AddLoanRecordModal;
+export default EditLoanModal;

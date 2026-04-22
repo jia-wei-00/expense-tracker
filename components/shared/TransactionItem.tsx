@@ -29,7 +29,7 @@ const TransactionItem = ({
 
   const handlePress = () => {
     router.push({
-      pathname: "/expense-details/[id]",
+      pathname: "/expense/expense-details/[id]",
       params: { id: String(id) },
     });
   };

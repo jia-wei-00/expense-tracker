@@ -9,5 +9,7 @@
   "chart.expense.title": "Monthly Expenses",
   "chart.income.title": "Monthly Income",
   "chart.total": "Total RM{{total}}",
-  "chart.empty": "No data found"
+  "chart.empty": "No data found",
+  "month": "Month",
+  "year": "Year"
 }

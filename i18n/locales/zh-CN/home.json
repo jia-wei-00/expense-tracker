@@ -9,5 +9,7 @@
   "chart.expense.title": "月度支出",
   "chart.income.title": "月度收入",
   "chart.total": "总计 RM{{total}}",
-  "chart.empty": "暂无数据"
+  "chart.empty": "暂无数据",
+  "month": "月份",
+  "year": "年份"
 }

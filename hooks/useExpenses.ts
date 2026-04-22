@@ -21,8 +21,8 @@ export const useFetchMonthlyExpenses = (month: string | Date) => {
   return useQuery({
     queryKey: [monthKey],
     queryFn: async () => {
-      const startOfMonth = dayjs().startOf("month").toISOString();
-      const startOfNextMonth = dayjs()
+      const startOfMonth = dayjs(month).startOf("month").toISOString();
+      const startOfNextMonth = dayjs(month)
         .add(1, "month")
         .startOf("month")
         .toISOString();
@@ -98,8 +98,7 @@ export const useInfiniteExpenses = (
   });
 };
 
-export const useExpenseById = (id: number) => {
-  const { data } = useInfiniteExpenses();
+export const useExpenseById = (id: number) => {  const { data } = useInfiniteExpenses();
   const expenses = data?.pages.flat() ?? [];
   return expenses.find((expense) => expense.id === id);
 };

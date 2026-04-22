@@ -1,8 +1,10 @@
 {
   "loans": "Loans",
   "add.loan": "Add Loan",
+  "edit.loan": "Edit Loan",
   "add.record": "Add Payment",
   "adding": "Adding...",
+  "saving": "Saving...",
   "loan.name": "Loan Name",
   "total.amount": "Total Amount",
   "interest.rate": "Interest Rate (%)",
