@@ -1,0 +1,16 @@
+{
+  "title": "AI Assistant",
+  "placeholder": "Describe your expenses or ask a question...",
+  "send": "Send",
+  "approve.all": "Approve All",
+  "clear": "Clear",
+  "suggestions.title": "Here are the expenses I found. You can edit them before approving:",
+  "submitting": "Saving...",
+  "submitted": "Expenses saved successfully!",
+  "error": "Something went wrong. Please try again.",
+  "empty.state": "Hi! I can help you log expenses or answer questions about your spending.\n\nTry saying:\n• \"I had lunch RM15, coffee RM8\"\n• \"How much did I spend this month?\"\n• \"What did I spend on food this week?\"",
+  "category.new": "New",
+  "thinking": "Thinking...",
+  "suggestions.saved": "✓ Expenses logged successfully",
+  "suggestions.cleared": "Review cancelled"
+}

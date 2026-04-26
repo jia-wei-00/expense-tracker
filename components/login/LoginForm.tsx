@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/useAuth";
 import { Icon } from "@/components/ui/icon";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 
 const LoginForm = () => {
   const methods = useForm<TLoginSchema>({
@@ -19,12 +20,24 @@ const LoginForm = () => {
   const isLoading = useAuthStore((state) => state.isAuthLoading);
 
   const { t } = useTranslation("auth");
+  const toast = useToast();
 
   const onSubmit = async () => {
-    await login({
-      email: methods.getValues("email"),
-      password: methods.getValues("password"),
-    });
+    try {
+      await login({
+        email: methods.getValues("email"),
+        password: methods.getValues("password"),
+      });
+    } catch {
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <ToastTitle>{t("error.login")}</ToastTitle>
+          </Toast>
+        ),
+      });
+    }
   };
 
   const handleToggleShowPassword = () => {

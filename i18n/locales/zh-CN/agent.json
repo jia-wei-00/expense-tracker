@@ -1,0 +1,16 @@
+{
+  "title": "AI 助手",
+  "placeholder": "描述您的支出或提问...",
+  "send": "发送",
+  "approve.all": "全部批准",
+  "clear": "清除",
+  "suggestions.title": "以下是我找到的支出记录，您可以在批准前进行编辑：",
+  "submitting": "保存中...",
+  "submitted": "支出已成功保存！",
+  "error": "出现错误，请重试。",
+  "empty.state": "您好！我可以帮您记录支出或回答关于消费的问题。\n\n试试说：\n• \"午饭 RM15，咖啡 RM8\"\n• \"我这个月花了多少？\"\n• \"这周在餐饮上花了多少？\"",
+  "category.new": "新建",
+  "thinking": "思考中...",
+  "suggestions.saved": "✓ 支出已成功记录",
+  "suggestions.cleared": "已取消审核"
+}

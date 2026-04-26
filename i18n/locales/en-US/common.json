@@ -13,5 +13,9 @@
   "tab.explore": "Explore",
   "tab.settings": "Settings",
   "tab.loan": "Loans",
-  "expense.add": "Add Expense"
+  "expense.add": "Add Expense",
+  "tab.agent": "AI",
+  "error.save": "Failed to save. Please try again.",
+  "error.delete": "Failed to delete. Please try again.",
+  "error.generic": "Something went wrong. Please try again."
 }

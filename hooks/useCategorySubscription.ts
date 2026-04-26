@@ -16,7 +16,7 @@ export const useCategorySubscription = () => {
       .channel(`${userId}_category`)
       .on<TCategory>(
         "postgres_changes",
-        { event: "*", schema: "public", table: "category" },
+        { event: "*", schema: "public", table: "expense_category" },
         (payload) => {
           const { eventType, new: newCategory, old } = payload;
 

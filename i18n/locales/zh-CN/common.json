@@ -13,5 +13,9 @@
   "tab.explore": "记录",
   "tab.settings": "设置",
   "tab.loan": "贷款",
-  "expense.add": "添加支出"
+  "expense.add": "添加支出",
+  "tab.agent": "智能助手",
+  "error.save": "保存失败，请重试。",
+  "error.delete": "删除失败，请重试。",
+  "error.generic": "操作失败，请重试。"
 }

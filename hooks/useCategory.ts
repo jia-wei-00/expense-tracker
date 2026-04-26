@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import { QUERY_KEY } from "@/constants/query-key";
@@ -34,4 +34,29 @@ export const useGetCategoryIdByName = (name: string | null | undefined) => {
   const { data: categories } = useCategory();
   if (!name || !categories) return null;
   return categories.find((c) => c.name === name)?.id ?? null;
+};
+
+export const useAddCategory = () => {
+  const userId = useSessionStore.getState().getUserId();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      name,
+      is_expense,
+    }: {
+      name: string;
+      is_expense: boolean;
+    }) => {
+      const { data, error } = await supabase
+        .from("expense_category")
+        .insert({ name, is_expense, user_id: userId! })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY.CATEGORIES] });
+    },
+  });
 };

@@ -12,6 +12,8 @@ import { IExpense, TAddExpense } from "@/types/store/useExpenses";
 import { QUERY_KEY } from "@/constants/query-key";
 import dayjs from "dayjs";
 import { TMonthlySummary } from "@/types/hooks/use-expense";
+import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { useTranslation } from "react-i18next";
 
 // need to refactor this, we just have to fetch limit data to 5 and then
 export const useFetchMonthlyExpenses = (month: string | Date) => {
@@ -105,6 +107,8 @@ export const useExpenseById = (id: number) => {  const { data } = useInfiniteExp
 
 export const useAddExpense = () => {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation("common");
   return useMutation({
     mutationFn: async (expense: TAddExpense) => {
       const { data, error } = await supabase
@@ -126,11 +130,23 @@ export const useAddExpense = () => {
         }
       }
     },
+    onError: () => {
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <ToastTitle>{t("error.save")}</ToastTitle>
+          </Toast>
+        ),
+      });
+    },
   });
 };
 
 export const useUpdateExpense = () => {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation("common");
   return useMutation({
     mutationFn: async (expense: TAddExpense) => {
       if (!expense.id) return;
@@ -154,11 +170,23 @@ export const useUpdateExpense = () => {
         }
       }
     },
+    onError: () => {
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <ToastTitle>{t("error.save")}</ToastTitle>
+          </Toast>
+        ),
+      });
+    },
   });
 };
 
 export const useDeleteExpense = () => {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation("common");
   return useMutation({
     mutationFn: async ({ id }: { id: number; spend_date: string }) => {
       const { error } = await supabase.from("expense").delete().eq("id", id);
@@ -169,6 +197,16 @@ export const useDeleteExpense = () => {
         const monthKey = dayjs(spend_date).format("YYYY-MM");
         queryClient.invalidateQueries({ queryKey: [monthKey] });
       }
+    },
+    onError: () => {
+      toast.show({
+        placement: "top",
+        render: ({ id }) => (
+          <Toast nativeID={`toast-${id}`} action="error">
+            <ToastTitle>{t("error.delete")}</ToastTitle>
+          </Toast>
+        ),
+      });
     },
   });
 };
