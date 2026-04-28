@@ -1,143 +1,119 @@
-import { useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { useState, useCallback, useRef } from "react";
 import { useSessionStore } from "@/store/useSession";
-import { QUERY_KEY } from "@/constants/query-key";
-import { ParsedExpense, TChatMessage } from "@/types/page/agent";
-import dayjs from "dayjs";
+import { useCategory, useAddCategory } from "@/hooks/useCategory";
+import { useAddExpense } from "@/hooks/useExpenses";
+import { useErrorToast } from "@/hooks/useErrorToast";
+import { useTranslation } from "react-i18next";
+import type { TChatMessage, ParsedExpense } from "@/types/page/agent";
 
-const EDGE_FN_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/ai-chat`;
+const genId = () => Math.random().toString(36).slice(2);
 
-function parseDataStream(line: string): {
-  type: "text" | "tool_result" | "finish" | "unknown";
-  value: string;
-} {
-  if (line.startsWith("0:")) {
-    try {
-      return { type: "text", value: JSON.parse(line.slice(2)) };
-    } catch {
-      return { type: "text", value: line.slice(2) };
+const parseDataStream = (text: string) => {
+  let textContent = "";
+  let parsedExpenses: ParsedExpense[] | null = null;
+
+  for (const line of text.split("\n")) {
+    if (line.startsWith("0:")) {
+      try {
+        textContent += JSON.parse(line.slice(2));
+      } catch {
+        // skip malformed line
+      }
+    } else if (line.startsWith("a:")) {
+      try {
+        const obj = JSON.parse(line.slice(2));
+        if (obj.toolName === "parse_expenses" && obj.result?.items) {
+          parsedExpenses = obj.result.items as ParsedExpense[];
+        }
+      } catch {
+        // skip malformed line
+      }
     }
   }
-  if (line.startsWith("a:")) {
-    return { type: "tool_result", value: line.slice(2) };
-  }
-  if (line.startsWith("d:")) {
-    return { type: "finish", value: line.slice(2) };
-  }
-  return { type: "unknown", value: line };
-}
 
-interface UseAgentChatOptions {
-  categories: { id: number; name: string; is_expense: boolean }[];
-}
+  return { textContent: textContent.trim(), parsedExpenses };
+};
 
-export const useAgentChat = ({ categories }: UseAgentChatOptions) => {
-  const { t } = useTranslation("agent");
-  const userId = useSessionStore.getState().getUserId();
-  const queryClient = useQueryClient();
+export const useAgentChat = () => {
   const [messages, setMessages] = useState<TChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ref so sendMessage always sees latest messages without stale closure
+  const messagesRef = useRef<TChatMessage[]>([]);
+  messagesRef.current = messages;
+
+  const { t } = useTranslation("agent");
+  const { showError } = useErrorToast();
+
+  const session = useSessionStore((state) => state.session);
+  const userId = useSessionStore((state) => state.getUserId());
+  const { data: categories = [] } = useCategory();
+  const { mutateAsync: addExpense } = useAddExpense();
+  const { mutateAsync: addCategory } = useAddCategory();
+
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (userText: string) => {
       const userMsg: TChatMessage = {
-        id: `user-${Date.now()}`,
+        id: genId(),
         role: "user",
-        content,
-      };
-      const assistantId = `assistant-${Date.now()}`;
-      const assistantPlaceholder: TChatMessage = {
-        id: assistantId,
-        role: "assistant",
-        content: "",
-        isLoading: true,
+        content: userText,
       };
 
-      setMessages((prev) => [...prev, userMsg, assistantPlaceholder]);
+      setMessages((prev) => [...prev, userMsg]);
+
+      const loadingId = genId();
+      setMessages((prev) => [
+        ...prev,
+        { id: loadingId, role: "assistant", content: "", isLoading: true },
+      ]);
       setIsStreaming(true);
 
       try {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
+        const history = [...messagesRef.current, userMsg]
+          .filter((m) => !m.isLoading)
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            // Summarise pending suggestion messages so the AI has context
+            content:
+              m.suggestions && m.suggestions.length > 0
+                ? "[Expense items presented to user for review]"
+                : m.content,
+          }))
+          .filter((m) => m.content.length > 0);
 
-        const history = [...messages, userMsg].map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-
-        const response = await fetch(EDGE_FN_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/ai-chat`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.access_token ?? ""}`,
+              apikey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
+            },
+            body: JSON.stringify({ messages: history, categories }),
           },
-          body: JSON.stringify({ messages: history, categories }),
-        });
+        );
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        // React Native's fetch doesn't reliably support body streaming,
-        // so we read the full response and parse all lines at once.
         const text = await response.text();
-        const lines = text.split("\n");
-
-        let accText = "";
-        let parsedSuggestions: ParsedExpense[] | null = null;
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-
-          const parsed = parseDataStream(trimmed);
-
-          if (parsed.type === "text") {
-            accText += parsed.value;
-          } else if (parsed.type === "tool_result") {
-            try {
-              const toolData = JSON.parse(parsed.value);
-              if (
-                toolData?.toolName === "parse_expenses" &&
-                toolData?.result?.items
-              ) {
-                parsedSuggestions = toolData.result.items;
-              }
-            } catch {
-              // non-JSON tool data, ignore
-            }
-          }
-        }
+        const { textContent, parsedExpenses } = parseDataStream(text);
 
         setMessages((prev) =>
           prev.map((m) => {
-            if (m.id !== assistantId) return m;
-            if (parsedSuggestions) {
-              // Suggestions go inline in the message — the chat bubble
-              // becomes an editable review card (human-in-the-loop).
-              return {
-                ...m,
-                content: accText,
-                isLoading: false,
-                suggestions: parsedSuggestions,
-              };
+            if (m.id !== loadingId) return m;
+            if (parsedExpenses && parsedExpenses.length > 0) {
+              return { ...m, isLoading: false, suggestions: parsedExpenses };
             }
-            return { ...m, content: accText, isLoading: false };
+            return { ...m, isLoading: false, content: textContent || t("error") };
           }),
         );
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === "AbortError") return;
+      } catch {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantId
-              ? {
-                  ...m,
-                  content: t("error"),
-                  isLoading: false,
-                }
+            m.id === loadingId
+              ? { ...m, isLoading: false, content: t("error") }
               : m,
           ),
         );
@@ -145,22 +121,18 @@ export const useAgentChat = ({ categories }: UseAgentChatOptions) => {
         setIsStreaming(false);
       }
     },
-    [messages, categories, t],
+    [categories, session, t],
   );
 
   const updateSuggestion = useCallback(
     (messageId: string, index: number, updated: ParsedExpense) => {
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? {
-                ...m,
-                suggestions: m.suggestions?.map((s, i) =>
-                  i === index ? updated : s,
-                ),
-              }
-            : m,
-        ),
+        prev.map((m) => {
+          if (m.id !== messageId || !m.suggestions) return m;
+          const suggestions = [...m.suggestions];
+          suggestions[index] = updated;
+          return { ...m, suggestions };
+        }),
       );
     },
     [],
@@ -169,27 +141,13 @@ export const useAgentChat = ({ categories }: UseAgentChatOptions) => {
   const removeSuggestion = useCallback(
     (messageId: string, index: number) => {
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? {
-                ...m,
-                suggestions: m.suggestions?.filter((_, i) => i !== index),
-              }
-            : m,
-        ),
-      );
-    },
-    [],
-  );
-
-  const resolveSuggestions = useCallback(
-    (messageId: string, resolvedContent: string) => {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, suggestions: undefined, content: resolvedContent }
-            : m,
-        ),
+        prev.map((m) => {
+          if (m.id !== messageId || !m.suggestions) return m;
+          return {
+            ...m,
+            suggestions: m.suggestions.filter((_, i) => i !== index),
+          };
+        }),
       );
     },
     [],
@@ -197,63 +155,69 @@ export const useAgentChat = ({ categories }: UseAgentChatOptions) => {
 
   const submitSuggestions = useCallback(
     async (messageId: string, suggestions: ParsedExpense[]) => {
+      if (!userId) return;
       setIsSubmitting(true);
+
       try {
-        const resolvedSuggestions = await Promise.all(
+        // Create any new categories first, then resolve their IDs
+        const resolved = await Promise.all(
           suggestions.map(async (s) => {
             if (s.is_new_category) {
-              const { data, error } = await supabase
-                .from("expense_category")
-                .insert({
-                  name: s.category_name,
-                  is_expense: s.is_expense,
-                  user_id: userId!,
-                })
-                .select()
-                .single();
-              if (error) throw error;
-              return { ...s, category_id: data.id, is_new_category: false };
+              const newCat = await addCategory({
+                name: s.category_name,
+                is_expense: s.is_expense,
+              });
+              return { ...s, category_id: newCat.id };
             }
             return s;
           }),
         );
 
-        const rows = resolvedSuggestions.map((s) => ({
-          name: s.name,
-          amount: s.amount,
-          is_expense: s.is_expense,
-          spend_date: s.spend_date,
-          category: s.category_id,
-          user_id: userId!,
-        }));
-
-        const { error } = await supabase.from("expense").insert(rows);
-        if (error) throw error;
-
-        const affectedMonths = new Set(
-          resolvedSuggestions.map((s) => dayjs(s.spend_date).format("YYYY-MM")),
+        // Insert all expenses; use allSettled so one failure doesn't abort others.
+        // useAddExpense's own onError toast handles individual failures.
+        const results = await Promise.allSettled(
+          resolved.map((s) =>
+            addExpense({
+              name: s.name,
+              amount: s.amount,
+              is_expense: s.is_expense,
+              spend_date: s.spend_date,
+              category: s.category_id,
+              user_id: userId,
+            }),
+          ),
         );
-        for (const monthKey of affectedMonths) {
-          queryClient.invalidateQueries({ queryKey: [monthKey] });
-        }
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY.EXPENSES] });
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY.CATEGORIES] });
 
-        resolveSuggestions(messageId, t("suggestions.saved"));
+        if (results.every((r) => r.status === "fulfilled")) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === messageId
+                ? { ...m, suggestions: undefined, content: t("suggestions.saved") }
+                : m,
+            ),
+          );
+        }
       } catch {
-        // Leave suggestions on the message so the user can retry
+        // Catches addCategory failures (no mutation-level onError there)
+        showError(t("error"));
       } finally {
         setIsSubmitting(false);
       }
     },
-    [userId, queryClient, resolveSuggestions, t],
+    [userId, addCategory, addExpense, t, showError],
   );
 
   const clearSuggestions = useCallback(
     (messageId: string) => {
-      resolveSuggestions(messageId, t("suggestions.cleared"));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? { ...m, suggestions: undefined, content: t("suggestions.cleared") }
+            : m,
+        ),
+      );
     },
-    [resolveSuggestions, t],
+    [t],
   );
 
   return {

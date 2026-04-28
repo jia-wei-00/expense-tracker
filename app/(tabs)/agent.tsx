@@ -6,7 +6,6 @@ import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
 import { useTranslation } from "react-i18next";
 import Container from "@/components/shared/Container";
-import { useCategory } from "@/hooks/useCategory";
 import { useAgentChat } from "@/hooks/useAgent";
 import { TChatMessage } from "@/types/page/agent";
 import ChatBubble from "@/components/agent/ChatBubble";
@@ -21,7 +20,6 @@ const MessageSeparator = () => <Box className="h-1" />;
 
 export default function AgentScreen() {
   const { t } = useTranslation("agent");
-  const { data: categories = [] } = useCategory();
   const [inputText, setInputText] = useState("");
   const listRef = useRef<FlashList<TChatMessage>>(null);
 
@@ -34,7 +32,7 @@ export default function AgentScreen() {
     removeSuggestion,
     submitSuggestions,
     clearSuggestions,
-  } = useAgentChat({ categories });
+  } = useAgentChat();
 
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
@@ -101,7 +99,6 @@ export default function AgentScreen() {
                 renderItem={renderMessage}
                 keyExtractor={keyExtractor}
                 ItemSeparatorComponent={MessageSeparator}
-                estimatedItemSize={60}
                 contentContainerStyle={{ paddingBottom: 8 }}
                 onContentSizeChange={() =>
                   listRef.current?.scrollToEnd({ animated: true })

@@ -12,7 +12,7 @@ import { IExpense, TAddExpense } from "@/types/store/useExpenses";
 import { QUERY_KEY } from "@/constants/query-key";
 import dayjs from "dayjs";
 import { TMonthlySummary } from "@/types/hooks/use-expense";
-import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { useErrorToast } from "@/hooks/useErrorToast";
 import { useTranslation } from "react-i18next";
 
 // need to refactor this, we just have to fetch limit data to 5 and then
@@ -107,7 +107,7 @@ export const useExpenseById = (id: number) => {  const { data } = useInfiniteExp
 
 export const useAddExpense = () => {
   const queryClient = useQueryClient();
-  const toast = useToast();
+  const { showError } = useErrorToast();
   const { t } = useTranslation("common");
   return useMutation({
     mutationFn: async (expense: TAddExpense) => {
@@ -130,22 +130,13 @@ export const useAddExpense = () => {
         }
       }
     },
-    onError: () => {
-      toast.show({
-        placement: "top",
-        render: ({ id }) => (
-          <Toast nativeID={`toast-${id}`} action="error">
-            <ToastTitle>{t("error.save")}</ToastTitle>
-          </Toast>
-        ),
-      });
-    },
+    onError: () => showError(t("error.save")),
   });
 };
 
 export const useUpdateExpense = () => {
   const queryClient = useQueryClient();
-  const toast = useToast();
+  const { showError } = useErrorToast();
   const { t } = useTranslation("common");
   return useMutation({
     mutationFn: async (expense: TAddExpense) => {
@@ -170,22 +161,13 @@ export const useUpdateExpense = () => {
         }
       }
     },
-    onError: () => {
-      toast.show({
-        placement: "top",
-        render: ({ id }) => (
-          <Toast nativeID={`toast-${id}`} action="error">
-            <ToastTitle>{t("error.save")}</ToastTitle>
-          </Toast>
-        ),
-      });
-    },
+    onError: () => showError(t("error.save")),
   });
 };
 
 export const useDeleteExpense = () => {
   const queryClient = useQueryClient();
-  const toast = useToast();
+  const { showError } = useErrorToast();
   const { t } = useTranslation("common");
   return useMutation({
     mutationFn: async ({ id }: { id: number; spend_date: string }) => {
@@ -198,15 +180,6 @@ export const useDeleteExpense = () => {
         queryClient.invalidateQueries({ queryKey: [monthKey] });
       }
     },
-    onError: () => {
-      toast.show({
-        placement: "top",
-        render: ({ id }) => (
-          <Toast nativeID={`toast-${id}`} action="error">
-            <ToastTitle>{t("error.delete")}</ToastTitle>
-          </Toast>
-        ),
-      });
-    },
+    onError: () => showError(t("error.delete")),
   });
 };

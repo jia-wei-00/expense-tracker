@@ -8,7 +8,7 @@ import { useAuthStore } from "@/store/useAuth";
 import { Icon } from "@/components/ui/icon";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
+import { useErrorToast } from "@/hooks/useErrorToast";
 
 const LoginForm = () => {
   const methods = useForm<TLoginSchema>({
@@ -20,7 +20,7 @@ const LoginForm = () => {
   const isLoading = useAuthStore((state) => state.isAuthLoading);
 
   const { t } = useTranslation("auth");
-  const toast = useToast();
+  const { showError } = useErrorToast();
 
   const onSubmit = async () => {
     try {
@@ -29,14 +29,7 @@ const LoginForm = () => {
         password: methods.getValues("password"),
       });
     } catch {
-      toast.show({
-        placement: "top",
-        render: ({ id }) => (
-          <Toast nativeID={`toast-${id}`} action="error">
-            <ToastTitle>{t("error.login")}</ToastTitle>
-          </Toast>
-        ),
-      });
+      showError(t("error.login"));
     }
   };
 
