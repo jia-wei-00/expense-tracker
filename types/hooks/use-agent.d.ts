@@ -1,24 +1,20 @@
-export type Category = {
-  id: number;
-  name: string;
-  is_expense: boolean;
-};
-
-export type Message = {
+export type TMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-export type PendingToolCall = {
+export type TDisplayMessage = TMessage & { isLoading?: boolean };
+
+export type TPendingToolCall = {
   toolName: "addExpense" | "deleteExpense";
   args: {
-    // addExpense
+    // addExpense fields
     name?: string;
     amount?: number;
     category?: number;
     is_expense?: boolean;
     spend_date?: string;
-    // deleteExpense
+    // deleteExpense fields
     id?: number;
   };
 };

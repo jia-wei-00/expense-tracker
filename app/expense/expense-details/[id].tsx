@@ -1,22 +1,20 @@
-import React, { useState } from "react";
-import { Text } from "@/components/ui/text";
-import { useLocalSearchParams } from "expo-router";
-import { safeParseAny } from "@/utils/zod-utils";
-import { CATEGORY_ICON_MAP } from "@/constants/icon-map";
-import { categorySchema } from "@/types/constant/icon-map";
-import { Icon } from "@/components/ui/icon";
-import { Box } from "@/components/ui/box";
-import { Center } from "@/components/ui/center";
-import dayjs from "dayjs";
-import { useDeleteExpense, useExpenseById } from "@/hooks/useExpenses";
-import { IExpense } from "@/types/store/useExpenses";
-import { HStack } from "@/components/ui/hstack";
-import { VStack } from "@/components/ui/vstack";
-import Container from "@/components/shared/Container";
-import { Button, ButtonText } from "@/components/ui/button";
 import ActionSheet from "@/components/shared/ActionSheet";
+import Container from "@/components/shared/Container";
+import { Box } from "@/components/ui/box";
+import { Button, ButtonText } from "@/components/ui/button";
+import { Center } from "@/components/ui/center";
+import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
+import { CATEGORY_ICON_MAP } from "@/constants/icon-map";
+import { useDeleteExpense, useExpenseById } from "@/hooks/useExpenses";
+import { categorySchema } from "@/types/constant/icon-map";
+import { safeParseAny } from "@/utils/zod-utils";
+import dayjs from "dayjs";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { router } from "expo-router";
 
 const ExpenseDetails = () => {
   const { id } = useLocalSearchParams<{

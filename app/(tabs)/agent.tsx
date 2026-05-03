@@ -1,81 +1,58 @@
-import React, { useState, useRef, useCallback } from "react";
-import { KeyboardAvoidingView, Platform } from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import Animated from "react-native-reanimated";
+import ChatBubble from "@/components/agent/ChatBubble";
+import ChatInput from "@/components/agent/ChatInput";
+import PendingActionPanel from "@/components/agent/PendingActionPanel";
+import Container from "@/components/shared/Container";
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
+import { useChat } from "@/hooks/useAgent";
+import { useCategory } from "@/hooks/useCategory";
+import { TDisplayMessage } from "@/types/hooks/use-agent";
+import { FlashList } from "@shopify/flash-list";
+import React, { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import Container from "@/components/shared/Container";
-import { useAgentChat } from "@/hooks/useAgent";
-import { TChatMessage } from "@/types/page/agent";
-import ChatBubble from "@/components/agent/ChatBubble";
-import SuggestionsPanel from "@/components/agent/SuggestionsPanel";
-import ChatInput from "@/components/agent/ChatInput";
-
-const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList<TChatMessage>,
-);
+import { KeyboardAvoidingView, Platform } from "react-native";
 
 const MessageSeparator = () => <Box className="h-1" />;
 
 export default function AgentScreen() {
   const { t } = useTranslation("agent");
   const [inputText, setInputText] = useState("");
-  const listRef = useRef<FlashList<TChatMessage>>(null);
+  const listRef = useRef<FlashList<TDisplayMessage>>(null);
+
+  const { data: categories } = useCategory();
 
   const {
     messages,
-    isStreaming,
-    isSubmitting,
+    loading,
+    pendingToolCall,
     sendMessage,
-    updateSuggestion,
-    removeSuggestion,
-    submitSuggestions,
-    clearSuggestions,
-  } = useAgentChat();
+    confirmAction,
+    cancelAction,
+  } = useChat(categories ?? []);
+
+  const displayMessages: TDisplayMessage[] = loading
+    ? [...messages, { role: "assistant", content: "", isLoading: true }]
+    : messages;
 
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
-    if (!text || isStreaming) return;
+    if (!text || loading) return;
     setInputText("");
     await sendMessage(text);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [inputText, isStreaming, sendMessage]);
+  }, [inputText, loading, sendMessage]);
 
   const renderMessage = useCallback(
-    ({ item }: { item: TChatMessage }) => {
-      if (item.suggestions && item.suggestions.length > 0) {
-        return (
-          <SuggestionsPanel
-            suggestions={item.suggestions}
-            isSubmitting={isSubmitting}
-            onApproveAll={() => submitSuggestions(item.id, item.suggestions!)}
-            onClear={() => clearSuggestions(item.id)}
-            onUpdate={(index, updated) =>
-              updateSuggestion(item.id, index, updated)
-            }
-            onRemove={(index) => removeSuggestion(item.id, index)}
-          />
-        );
-      }
-      return (
-        <ChatBubble
-          role={item.role}
-          content={item.content}
-          isLoading={item.isLoading}
-        />
-      );
-    },
-    [
-      isSubmitting,
-      submitSuggestions,
-      clearSuggestions,
-      updateSuggestion,
-      removeSuggestion,
-    ],
+    ({ item }: { item: TDisplayMessage }) => (
+      <ChatBubble role={item.role} content={item.content} isLoading={item.isLoading} />
+    ),
+    [],
   );
 
-  const keyExtractor = useCallback((item: TChatMessage) => item.id, []);
+  const keyExtractor = useCallback(
+    (_: TDisplayMessage, index: number) => String(index),
+    [],
+  );
 
   return (
     <Container title={t("title")}>
@@ -86,16 +63,16 @@ export default function AgentScreen() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 20}
         >
           <Box className="flex-1">
-            {messages.length === 0 ? (
+            {displayMessages.length === 0 ? (
               <Box className="flex-1 items-center justify-center">
                 <Text className="text-typography-400 text-center text-sm leading-relaxed">
                   {t("empty.state")}
                 </Text>
               </Box>
             ) : (
-              <AnimatedFlashList
+              <FlashList
                 ref={listRef}
-                data={messages}
+                data={displayMessages}
                 renderItem={renderMessage}
                 keyExtractor={keyExtractor}
                 ItemSeparatorComponent={MessageSeparator}
@@ -107,14 +84,24 @@ export default function AgentScreen() {
             )}
           </Box>
 
+          {pendingToolCall && (
+            <PendingActionPanel
+              pendingToolCall={pendingToolCall}
+              categories={categories}
+              onConfirm={confirmAction}
+              onCancel={cancelAction}
+            />
+          )}
+
           <ChatInput
             value={inputText}
             onChange={setInputText}
             onSend={handleSend}
-            isDisabled={isStreaming}
+            isDisabled={loading}
           />
         </KeyboardAvoidingView>
       )}
     </Container>
   );
 }
+

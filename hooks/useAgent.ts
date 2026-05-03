@@ -1,233 +1,126 @@
-import { useState, useCallback, useRef } from "react";
-import { useSessionStore } from "@/store/useSession";
-import { useCategory, useAddCategory } from "@/hooks/useCategory";
-import { useAddExpense } from "@/hooks/useExpenses";
-import { useErrorToast } from "@/hooks/useErrorToast";
-import { useTranslation } from "react-i18next";
-import type { TChatMessage, ParsedExpense } from "@/types/page/agent";
+import { supabase } from '@/lib/supabase'
+import { TMessage, TPendingToolCall } from '@/types/hooks/use-agent'
+import type { TCategory } from '@/types/store/useCategory'
+import { useState } from 'react'
 
-const genId = () => Math.random().toString(36).slice(2);
+export function useChat(categories: TCategory[]) {
+  const [messages, setMessages] = useState<TMessage[]>([])
+  const [loading, setLoading] = useState(false)
+  const [pendingToolCall, setPendingToolCall] = useState<TPendingToolCall | null>(null)
 
-const parseDataStream = (text: string) => {
-  let textContent = "";
-  let parsedExpenses: ParsedExpense[] | null = null;
+  const sendMessage = async (userText: string) => {
+    if (loading || !userText.trim()) return
 
-  for (const line of text.split("\n")) {
-    if (line.startsWith("0:")) {
-      try {
-        textContent += JSON.parse(line.slice(2));
-      } catch {
-        // skip malformed line
-      }
-    } else if (line.startsWith("a:")) {
-      try {
-        const obj = JSON.parse(line.slice(2));
-        if (obj.toolName === "parse_expenses" && obj.result?.items) {
-          parsedExpenses = obj.result.items as ParsedExpense[];
-        }
-      } catch {
-        // skip malformed line
-      }
+    const userMsg: TMessage = { role: 'user', content: userText.trim() }
+    const updated = [...messages, userMsg]
+    setMessages(updated)
+    setLoading(true)
+    setPendingToolCall(null) // clear any previous pending action
+
+    const { data, error } = await supabase.functions.invoke('ai-chat', {
+      body: {
+        messages: updated,
+        categories,
+      },
+    })
+
+    if (error) {
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: '⚠️ Something went wrong. Please try again.' },
+      ])
+      setLoading(false)
+      return
     }
+
+    // Show AI reply
+    if (data.message) {
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
+    }
+
+    // If AI wants to write to DB, hold it for user confirmation
+    if (data.pendingToolCall) {
+      setPendingToolCall(data.pendingToolCall)
+    }
+
+    setLoading(false)
   }
 
-  return { textContent: textContent.trim(), parsedExpenses };
-};
+  // ---- User taps Confirm ----
+  const confirmAction = async () => {
+    if (!pendingToolCall) return
 
-export const useAgentChat = () => {
-  const [messages, setMessages] = useState<TChatMessage[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toolName, args } = pendingToolCall
+    setLoading(true)
 
-  // Ref so sendMessage always sees latest messages without stale closure
-  const messagesRef = useRef<TChatMessage[]>([]);
-  messagesRef.current = messages;
+    if (toolName === 'addExpense') {
+      const { error } = await supabase.from('expense').insert({
+        name: args.name,
+        amount: args.amount,
+        category: args.category,
+        is_expense: args.is_expense,
+        spend_date: args.spend_date ?? new Date().toISOString(),
+      })
 
-  const { t } = useTranslation("agent");
-  const { showError } = useErrorToast();
-
-  const session = useSessionStore((state) => state.session);
-  const userId = useSessionStore((state) => state.getUserId());
-  const { data: categories = [] } = useCategory();
-  const { mutateAsync: addExpense } = useAddExpense();
-  const { mutateAsync: addCategory } = useAddCategory();
-
-  const sendMessage = useCallback(
-    async (userText: string) => {
-      const userMsg: TChatMessage = {
-        id: genId(),
-        role: "user",
-        content: userText,
-      };
-
-      setMessages((prev) => [...prev, userMsg]);
-
-      const loadingId = genId();
-      setMessages((prev) => [
-        ...prev,
-        { id: loadingId, role: "assistant", content: "", isLoading: true },
-      ]);
-      setIsStreaming(true);
-
-      try {
-        const history = [...messagesRef.current, userMsg]
-          .filter((m) => !m.isLoading)
-          .map((m) => ({
-            role: m.role as "user" | "assistant",
-            // Summarise pending suggestion messages so the AI has context
-            content:
-              m.suggestions && m.suggestions.length > 0
-                ? "[Expense items presented to user for review]"
-                : m.content,
-          }))
-          .filter((m) => m.content.length > 0);
-
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/ai-chat`,
+      if (error) {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: `❌ Failed to save: ${error.message}` },
+        ])
+      } else {
+        const categoryName = categories.find(c => c.id === args.category)?.name ?? 'Unknown'
+        setMessages(prev => [
+          ...prev,
           {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.access_token ?? ""}`,
-              apikey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
-            },
-            body: JSON.stringify({ messages: history, categories }),
+            role: 'assistant',
+            content: `✅ ${args.is_expense ? 'Expense' : 'Income'} of RM${args.amount} for ${categoryName} saved!`,
           },
-        );
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const text = await response.text();
-        const { textContent, parsedExpenses } = parseDataStream(text);
-
-        setMessages((prev) =>
-          prev.map((m) => {
-            if (m.id !== loadingId) return m;
-            if (parsedExpenses && parsedExpenses.length > 0) {
-              return { ...m, isLoading: false, suggestions: parsedExpenses };
-            }
-            return { ...m, isLoading: false, content: textContent || t("error") };
-          }),
-        );
-      } catch {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === loadingId
-              ? { ...m, isLoading: false, content: t("error") }
-              : m,
-          ),
-        );
-      } finally {
-        setIsStreaming(false);
+        ])
       }
-    },
-    [categories, session, t],
-  );
+    }
 
-  const updateSuggestion = useCallback(
-    (messageId: string, index: number, updated: ParsedExpense) => {
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id !== messageId || !m.suggestions) return m;
-          const suggestions = [...m.suggestions];
-          suggestions[index] = updated;
-          return { ...m, suggestions };
-        }),
-      );
-    },
-    [],
-  );
+    if (toolName === 'deleteExpense') {
+      const { error } = await supabase.from('expense').delete().eq('id', args.id!)
 
-  const removeSuggestion = useCallback(
-    (messageId: string, index: number) => {
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id !== messageId || !m.suggestions) return m;
-          return {
-            ...m,
-            suggestions: m.suggestions.filter((_, i) => i !== index),
-          };
-        }),
-      );
-    },
-    [],
-  );
-
-  const submitSuggestions = useCallback(
-    async (messageId: string, suggestions: ParsedExpense[]) => {
-      if (!userId) return;
-      setIsSubmitting(true);
-
-      try {
-        // Create any new categories first, then resolve their IDs
-        const resolved = await Promise.all(
-          suggestions.map(async (s) => {
-            if (s.is_new_category) {
-              const newCat = await addCategory({
-                name: s.category_name,
-                is_expense: s.is_expense,
-              });
-              return { ...s, category_id: newCat.id };
-            }
-            return s;
-          }),
-        );
-
-        // Insert all expenses; use allSettled so one failure doesn't abort others.
-        // useAddExpense's own onError toast handles individual failures.
-        const results = await Promise.allSettled(
-          resolved.map((s) =>
-            addExpense({
-              name: s.name,
-              amount: s.amount,
-              is_expense: s.is_expense,
-              spend_date: s.spend_date,
-              category: s.category_id,
-              user_id: userId,
-            }),
-          ),
-        );
-
-        if (results.every((r) => r.status === "fulfilled")) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === messageId
-                ? { ...m, suggestions: undefined, content: t("suggestions.saved") }
-                : m,
-            ),
-          );
-        }
-      } catch {
-        // Catches addCategory failures (no mutation-level onError there)
-        showError(t("error"));
-      } finally {
-        setIsSubmitting(false);
+      if (error) {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: `❌ Failed to delete: ${error.message}` },
+        ])
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: '🗑️ Expense deleted successfully!' },
+        ])
       }
-    },
-    [userId, addCategory, addExpense, t, showError],
-  );
+    }
 
-  const clearSuggestions = useCallback(
-    (messageId: string) => {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, suggestions: undefined, content: t("suggestions.cleared") }
-            : m,
-        ),
-      );
-    },
-    [t],
-  );
+    setPendingToolCall(null)
+    setLoading(false)
+  }
+
+  // ---- User taps Cancel ----
+  const cancelAction = () => {
+    setPendingToolCall(null)
+    setMessages(prev => [
+      ...prev,
+      { role: 'assistant', content: 'Cancelled! Anything else I can help with?' },
+    ])
+  }
+
+  // ---- Clear chat ----
+  const clearMessages = () => {
+    setMessages([])
+    setPendingToolCall(null)
+  }
 
   return {
     messages,
-    isStreaming,
-    isSubmitting,
+    loading,
+    pendingToolCall,
     sendMessage,
-    updateSuggestion,
-    removeSuggestion,
-    submitSuggestions,
-    clearSuggestions,
-  };
-};
+    confirmAction,
+    cancelAction,
+    clearMessages,
+  }
+}

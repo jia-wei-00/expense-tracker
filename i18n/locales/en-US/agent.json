@@ -12,5 +12,9 @@
   "category.new": "New",
   "thinking": "Thinking...",
   "suggestions.saved": "✓ Expenses logged successfully",
-  "suggestions.cleared": "Review cancelled"
+  "suggestions.cleared": "Review cancelled",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "pending.title": "AI wants to save this. Confirm?",
+  "pending.delete": "Delete this expense?"
 }

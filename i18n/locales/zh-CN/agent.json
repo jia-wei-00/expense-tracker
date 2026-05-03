@@ -12,5 +12,9 @@
   "category.new": "新建",
   "thinking": "思考中...",
   "suggestions.saved": "✓ 支出已成功记录",
-  "suggestions.cleared": "已取消审核"
+  "suggestions.cleared": "已取消审核",
+  "confirm": "确认",
+  "cancel": "取消",
+  "pending.title": "AI 想要保存此记录，确认吗？",
+  "pending.delete": "删除此支出？"
 }
