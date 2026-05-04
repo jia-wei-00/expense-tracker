@@ -38,6 +38,8 @@ export function useChat(categories: TCategory[]) {
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
     }
 
+    console.log('AI response:', data)
+
     // If AI wants to write to DB, hold it for user confirmation
     if (data.pendingToolCall) {
       setPendingToolCall(data.pendingToolCall)
@@ -46,11 +48,12 @@ export function useChat(categories: TCategory[]) {
     setLoading(false)
   }
 
-  // ---- User taps Confirm ----
-  const confirmAction = async () => {
+  // ---- User taps Approve (with optional edited values) ----
+  const confirmAction = async (overrides?: TPendingToolCall['args']) => {
     if (!pendingToolCall) return
 
-    const { toolName, args } = pendingToolCall
+    const { toolName } = pendingToolCall
+    const args = overrides ?? pendingToolCall.args
     setLoading(true)
 
     if (toolName === 'addExpense') {

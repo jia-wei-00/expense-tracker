@@ -1,13 +1,12 @@
 import ChatBubble from "@/components/agent/ChatBubble";
 import ChatInput from "@/components/agent/ChatInput";
-import PendingActionPanel from "@/components/agent/PendingActionPanel";
 import Container from "@/components/shared/Container";
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
 import { useChat } from "@/hooks/useAgent";
 import { useCategory } from "@/hooks/useCategory";
 import { TDisplayMessage } from "@/types/hooks/use-agent";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 import React, { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Platform } from "react-native";
@@ -17,7 +16,7 @@ const MessageSeparator = () => <Box className="h-1" />;
 export default function AgentScreen() {
   const { t } = useTranslation("agent");
   const [inputText, setInputText] = useState("");
-  const listRef = useRef<FlashList<TDisplayMessage>>(null);
+  const listRef = useRef<FlashListRef<TDisplayMessage>>(null);
 
   const { data: categories } = useCategory();
 

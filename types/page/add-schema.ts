@@ -1,28 +1,5 @@
-import { z } from "zod";
 import type { TFunction } from "i18next";
-
-// export const createAddExpenseSchema = (t: TFunction) =>
-//   z.object({
-//     name: z
-//       .string(t("validation.name_required"))
-//       .min(1, t("validation.name_required")),
-//     amount: z
-//       .string(t("validation.amount_required"))
-//       .min(1, t("validation.amount_required"))
-//       .refine(
-//         (val) => /^\d+(\.\d{1,2})?$/.test(val),
-//         t("validation.max_2_decimals"),
-//       )
-//       .refine((val) => parseFloat(val) > 0, t("validation.must_be_positive"))
-//       .transform(Number),
-//     category: z
-//       .string(t("validation.category_required"))
-//       .trim()
-//       .min(1, t("validation.category_required"))
-//       .transform(Number),
-//     is_expense: z.stringbool(),
-//     spend_date: z.string(),
-//   });
+import { z } from "zod";
 
 export const createAddExpenseSchema = (t: TFunction) =>
   z.object({
