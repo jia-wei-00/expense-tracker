@@ -21,7 +21,6 @@ const ChatInput = ({ value, onChange, onSend, isDisabled }: IChatInput) => {
           multiline
           maxLength={500}
           returnKeyType="send"
-          blurOnSubmit={false}
         />
       </Input>
       <Button

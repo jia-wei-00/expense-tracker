@@ -1,23 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createGoogleGenerativeAI } from "npm:@ai-sdk/google";
-import { streamText, tool } from "npm:ai@4.3.15";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createGoogleGenerativeAI } from "npm:@ai-sdk/google";
+import { generateText, tool } from "npm:ai@4.3.15";
 import { z } from "npm:zod";
 
 const google = createGoogleGenerativeAI({
   apiKey: Deno.env.get("GEMINI_API_KEY") ?? "",
 });
-
-interface Category {
-  id: number;
-  name: string;
-  is_expense: boolean;
-}
-
-interface RequestBody {
-  messages: { role: "user" | "assistant"; content: string }[];
-  categories: Category[];
-}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -25,248 +14,276 @@ const CORS_HEADERS = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const addExpenseSchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .describe(
+      'Short description. Use the exact field name "name". Example: "coffee".',
+    ),
+  amount: z.number().positive().describe("Amount in MYR."),
+  category: z
+    .number()
+    .describe(
+      'Category ID. Use the exact field name "category". Never return "categoryId".',
+    ),
+  is_expense: z
+    .boolean()
+    .describe(
+      'Use the exact field name "is_expense". Never return "expense_type".',
+    ),
+  spend_date: z
+    .string()
+    .describe(
+      'Use the exact field name "spend_date". Return an ISO datetime string.',
+    ),
+});
+
+const deleteExpenseSchema = z.object({
+  id: z.number().describe("The expense ID to delete."),
+});
+
+type Category = {
+  id: number;
+  name: string;
+  is_expense: boolean;
+};
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type RequestBody = {
+  messages: ChatMessage[];
+  categories: Category[];
+};
+
+type AddExpenseArgs = z.infer<typeof addExpenseSchema>;
+type DeleteExpenseArgs = z.infer<typeof deleteExpenseSchema>;
+
+type PendingWriteToolCall =
+  | {
+      toolName: "addExpense";
+      args: AddExpenseArgs;
+    }
+  | {
+      toolName: "deleteExpense";
+      args: DeleteExpenseArgs;
+    };
+
+const parsePendingWriteToolCalls = (
+  result: Awaited<ReturnType<typeof generateText>>,
+): PendingWriteToolCall[] => {
+  const pendingWriteToolCalls: PendingWriteToolCall[] = [];
+
+  for (const step of result.steps) {
+    for (const toolResult of step.toolResults ?? []) {
+      if (toolResult.toolName === "addExpense") {
+        const parsed = addExpenseSchema.safeParse(toolResult.result);
+
+        if (!parsed.success) {
+          console.error("Invalid addExpense tool result", parsed.error.flatten());
+          continue;
+        }
+
+        pendingWriteToolCalls.push({
+          toolName: "addExpense",
+          args: parsed.data,
+        });
+      }
+
+      if (toolResult.toolName === "deleteExpense") {
+        const parsed = deleteExpenseSchema.safeParse(toolResult.result);
+
+        if (!parsed.success) {
+          console.error(
+            "Invalid deleteExpense tool result",
+            parsed.error.flatten(),
+          );
+          continue;
+        }
+
+        pendingWriteToolCalls.push({
+          toolName: "deleteExpense",
+          args: parsed.data,
+        });
+      }
+    }
+  }
+
+  return pendingWriteToolCalls;
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: CORS_HEADERS });
-  }
-
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
+    return new Response("ok", {
       headers: CORS_HEADERS,
     });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } },
-  );
+  try {
+    const authHeader = req.headers.get("Authorization");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: CORS_HEADERS,
-    });
-  }
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: CORS_HEADERS,
+      });
+    }
 
-  const { messages, categories }: RequestBody = await req.json();
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } },
+    );
 
-  const categoryList =
-    categories.length > 0
-      ? categories
-          .map(
-            (c) =>
-              `- id:${c.id} name:"${c.name}" type:${c.is_expense ? "expense" : "income"}`,
-          )
-          .join("\n")
-      : "No categories yet.";
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  const systemPrompt = `You are a helpful personal finance AI assistant embedded in an expense tracker app.
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: CORS_HEADERS,
+      });
+    }
+
+    const { messages, categories }: RequestBody = await req.json();
+
+    const categoryList =
+      categories.length > 0
+        ? categories
+            .map(
+              (category) =>
+                `- id:${category.id} name:"${category.name}" type:${category.is_expense ? "expense" : "income"}`,
+            )
+            .join("\n")
+        : "No categories yet.";
+
+    const result = await generateText({
+      model: google("gemini-2.5-flash"),
+      system: `You are a helpful personal finance AI assistant embedded in an expense tracker app.
 Today's date is ${new Date().toISOString().split("T")[0]}.
 The user's currency is RM (Malaysian Ringgit).
 
 The user has these expense/income categories:
 ${categoryList}
 
-You have two tools:
-
-1. parse_expenses — Call this when the user describes expenses or income they want to log.
-   Match to the closest existing category by id where possible.
-   If no suitable category exists, set category_id to null and is_new_category to true.
-   Default spend_date to today if the user does not specify.
-   IMPORTANT: When you call parse_expenses, do NOT output any additional text — the app will present the parsed items to the user as an editable review card. Only call the tool; do not say anything else.
-
-2. query_expenses — Call this when the user asks about their spending history.
-   After the tool returns data, write a friendly, concise summary with the totals and a breakdown by category.
-
-Always respond in the same language the user writes in. Be concise and friendly.`;
-
-  const result = streamText({
-    model: google("gemini-2.5-flash"),
-    system: systemPrompt,
-    messages,
-    tools: {
-      parse_expenses: tool({
-        description:
-          "Parse user's natural language description into structured expense/income items ready to be reviewed and saved.",
-        parameters: z.object({
-          items: z.array(
-            z.object({
-              name: z
-                .string()
-                .describe("Short description of the expense or income"),
-              amount: z.number().positive().describe("Amount in RM"),
-              is_expense: z
-                .boolean()
-                .describe("true for expense, false for income"),
-              spend_date: z
-                .string()
-                .describe(
-                  "ISO date string YYYY-MM-DD. Default to today if not specified.",
-                ),
-              category_name: z
-                .string()
-                .describe("Display name of the category"),
-              category_id: z
-                .number()
-                .nullable()
-                .describe(
-                  "Existing category id, or null if new category needed",
-                ),
-              is_new_category: z
-                .boolean()
-                .describe(
-                  "true if no existing category matched and a new one should be created",
-                ),
-            }),
-          ),
+Rules:
+- Always respond in the same language the user writes in.
+- For add or delete actions, call a write tool and do not write a chat reply.
+- For read-only questions, reply with a short friendly answer.
+- For addExpense, always provide every required field.
+- Use the exact field names: name, amount, category, is_expense, spend_date.
+- Never use alternative keys like description, categoryId, category_id, expense_type, or type.
+- Match the closest existing category id whenever possible.
+- If the user does not specify a date, use today's date and return a full ISO datetime string.
+- If the category is genuinely unclear, ask a clarifying question instead of guessing.`,
+      messages,
+      tools: {
+        addExpense: tool({
+          description:
+            "Propose a new expense or income record for user confirmation.",
+          parameters: addExpenseSchema,
+          execute: async (args) => args,
         }),
-        execute: async ({ items }) => ({ items }),
-      }),
-
-      query_expenses: tool({
-        description:
-          "Query the user's expense/income data for a time period and return a summary.",
-        parameters: z.object({
-          period: z
-            .enum(["today", "week", "month", "year", "custom"])
-            .describe("Time period to query"),
-          type: z
-            .enum(["expense", "income", "all"])
-            .describe("Filter by expense, income, or both"),
-          start_date: z
-            .string()
-            .optional()
-            .describe("Start date YYYY-MM-DD (for custom period)"),
-          end_date: z
-            .string()
-            .optional()
-            .describe("End date YYYY-MM-DD (for custom period)"),
+        deleteExpense: tool({
+          description: "Propose deleting an expense record by ID.",
+          parameters: deleteExpenseSchema,
+          execute: async (args) => args,
         }),
-        execute: async ({ period, type, start_date, end_date }) => {
-          const now = new Date();
-          let startISO: string;
-          let endISO = now.toISOString();
+        listExpenses: tool({
+          description: "List the user's expenses with optional filters.",
+          parameters: z.object({
+            category: z.number().optional(),
+            from: z.string().optional().describe("Start date in ISO format."),
+            to: z.string().optional().describe("End date in ISO format."),
+            limit: z.number().optional().default(10),
+          }),
+          execute: async ({ category, from, to, limit }) => {
+            let query = supabase
+              .from("expense")
+              .select(
+                "id, name, amount, spend_date, is_expense, expense_category(name)",
+              )
+              .eq("user_id", user.id)
+              .order("spend_date", { ascending: false })
+              .limit(limit ?? 10);
 
-          switch (period) {
-            case "today": {
-              const s = new Date(now);
-              s.setHours(0, 0, 0, 0);
-              startISO = s.toISOString();
-              break;
-            }
-            case "week": {
-              const s = new Date(now);
-              s.setDate(now.getDate() - now.getDay());
-              s.setHours(0, 0, 0, 0);
-              startISO = s.toISOString();
-              break;
-            }
-            case "month": {
-              startISO = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                1,
-              ).toISOString();
-              break;
-            }
-            case "year": {
-              startISO = new Date(now.getFullYear(), 0, 1).toISOString();
-              break;
-            }
-            default: {
-              startISO = start_date
-                ? new Date(start_date).toISOString()
-                : new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    1,
-                  ).toISOString();
-              if (end_date) {
-                endISO = new Date(`${end_date}T23:59:59`).toISOString();
-              }
-            }
-          }
+            if (category) query = query.eq("category", category);
+            if (from) query = query.gte("spend_date", from);
+            if (to) query = query.lte("spend_date", to);
 
-          let query = supabase
-            .from("expense")
-            .select(
-              "amount, is_expense, name, spend_date, expense_category(name)",
-            )
-            .eq("user_id", user.id)
-            .gte("spend_date", startISO)
-            .lte("spend_date", endISO);
+            const { data, error } = await query;
 
-          if (type === "expense") query = query.eq("is_expense", true);
-          if (type === "income") query = query.eq("is_expense", false);
+            if (error) return { error: error.message };
 
-          const { data, error } = await query;
-          if (error) return { error: error.message };
+            return data ?? [];
+          },
+        }),
+        getMonthlySummary: tool({
+          description:
+            "Get the user's total spending grouped by category for a given month.",
+          parameters: z.object({
+            month: z
+              .string()
+              .describe('Month in "YYYY-MM" format. Example: "2026-04".'),
+          }),
+          execute: async ({ month }) => {
+            const { data, error } = await supabase.rpc("get_monthly_summary", {
+              p_user_id: user.id,
+              p_month: month,
+            });
 
-          const rows = data ?? [];
-          const totalExpense = rows
-            .filter((r) => r.is_expense)
-            .reduce((s, r) => s + (r.amount ?? 0), 0);
-          const totalIncome = rows
-            .filter((r) => !r.is_expense)
-            .reduce((s, r) => s + (r.amount ?? 0), 0);
+            if (error) return { error: error.message };
 
-          const byCategory: Record<string, number> = {};
-          for (const row of rows) {
-            const cat =
-              (row.expense_category as { name: string } | null)?.name ??
-              "Uncategorized";
-            byCategory[cat] = (byCategory[cat] ?? 0) + (row.amount ?? 0);
-          }
+            return data;
+          },
+        }),
+      },
+      maxSteps: 3,
+    });
 
-          return {
-            period,
-            totalExpense,
-            totalIncome,
-            transactionCount: rows.length,
-            byCategory,
-          };
+    const pendingToolCalls = parsePendingWriteToolCalls(result);
+
+    if (pendingToolCalls.length > 0) {
+      return new Response(
+        JSON.stringify({
+          message: null,
+          pendingToolCalls,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...CORS_HEADERS,
+          },
         },
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        message: result.text,
+        pendingToolCalls: null,
       }),
-    },
-    maxSteps: 3,
-  });
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...CORS_HEADERS,
+        },
+      },
+    );
+  } catch (error) {
+    console.error(error);
 
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const part of result.fullStream) {
-          let line: string | null = null;
-          if (part.type === "text-delta") {
-            line = `0:${JSON.stringify(part.textDelta)}\n`;
-          } else if (part.type === "tool-result") {
-            line = `a:${JSON.stringify({
-              toolCallId: part.toolCallId,
-              toolName: part.toolName,
-              result: part.result,
-            })}\n`;
-          } else if (part.type === "finish") {
-            line = `d:${JSON.stringify({ finishReason: part.finishReason })}\n`;
-          }
-          if (line) controller.enqueue(encoder.encode(line));
-        }
-      } finally {
-        controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "x-vercel-ai-data-stream": "v1",
-      ...CORS_HEADERS,
-    },
-  });
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        ...CORS_HEADERS,
+      },
+    });
+  }
 });

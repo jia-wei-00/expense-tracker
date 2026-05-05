@@ -1,5 +1,6 @@
 import ChatBubble from "@/components/agent/ChatBubble";
 import ChatInput from "@/components/agent/ChatInput";
+import PendingActionPanel from "@/components/agent/PendingActionPanel";
 import Container from "@/components/shared/Container";
 import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
@@ -43,7 +44,11 @@ export default function AgentScreen() {
 
   const renderMessage = useCallback(
     ({ item }: { item: TDisplayMessage }) => (
-      <ChatBubble role={item.role} content={item.content} isLoading={item.isLoading} />
+      <ChatBubble
+        role={item.role}
+        content={item.content}
+        isLoading={item.isLoading}
+      />
     ),
     [],
   );
@@ -57,9 +62,9 @@ export default function AgentScreen() {
     <Container title={t("title")}>
       {() => (
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
           className="flex-1"
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 20}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
           <Box className="flex-1">
             {displayMessages.length === 0 ? (
@@ -85,7 +90,7 @@ export default function AgentScreen() {
 
           {pendingToolCall && (
             <PendingActionPanel
-              pendingToolCall={pendingToolCall}
+              pendingToolCalls={pendingToolCall}
               categories={categories}
               onConfirm={confirmAction}
               onCancel={cancelAction}
@@ -103,4 +108,3 @@ export default function AgentScreen() {
     </Container>
   );
 }
-

@@ -18,3 +18,8 @@ export type TPendingToolCall = {
     id?: number;
   };
 };
+
+export type TAiChatResponse = {
+  message: string;
+  pendingToolCalls?: TPendingToolCall[];
+};

@@ -2,7 +2,7 @@ import type { TPendingToolCall } from "@/types/hooks/use-agent";
 import type { TCategory } from "@/types/store/useCategory";
 
 export interface IPendingActionPanel {
-  pendingToolCall: TPendingToolCall;
+  pendingToolCalls: TPendingToolCall[];
   categories: TCategory[] | undefined;
   onConfirm: (args: TPendingToolCall["args"]) => void;
   onCancel: () => void;

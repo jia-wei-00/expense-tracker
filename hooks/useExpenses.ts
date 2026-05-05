@@ -13,6 +13,7 @@ import { QUERY_KEY } from "@/constants/query-key";
 import dayjs from "dayjs";
 import { TMonthlySummary } from "@/types/hooks/use-expense";
 import { useErrorToast } from "@/hooks/useErrorToast";
+
 import { useTranslation } from "react-i18next";
 
 // need to refactor this, we just have to fetch limit data to 5 and then
@@ -100,7 +101,8 @@ export const useInfiniteExpenses = (
   });
 };
 
-export const useExpenseById = (id: number) => {  const { data } = useInfiniteExpenses();
+export const useExpenseById = (id: number) => {
+  const { data } = useInfiniteExpenses();
   const expenses = data?.pages.flat() ?? [];
   return expenses.find((expense) => expense.id === id);
 };
@@ -110,10 +112,10 @@ export const useAddExpense = () => {
   const { showError } = useErrorToast();
   const { t } = useTranslation("common");
   return useMutation({
-    mutationFn: async (expense: TAddExpense) => {
+    mutationFn: async (expense: TAddExpense | TAddExpense[]) => {
       const { data, error } = await supabase
         .from("expense")
-        .insert(expense)
+        .insert(Array.isArray(expense) ? expense : [expense])
         .select();
       if (error) throw error;
       return data;
