@@ -78,8 +78,6 @@ export function useChat() {
       .filter((tc) => tc.toolName === "deleteExpense")
       .map((tc) => tc.args.id!);
 
-    console.log(toDelete, "toDelete");
-
     const [addResult, ...deleteResults] = await Promise.all([
       toAdd.length > 0 ? supabase.from("expense").insert(toAdd) : null,
       ...toDelete.map((id) => supabase.from("expense").delete().eq("id", id)),
@@ -97,22 +95,33 @@ export function useChat() {
       ]);
     } else {
       const parts: string[] = [];
-      if (toAdd.length > 0)
-        parts.push(
-          `${toAdd.length} expense${toAdd.length > 1 ? "s" : ""} saved`,
-        );
+      if (toAdd.length > 0) {
+        const list = toAdd
+          .map((e) => `• ${e.name} — RM ${e.amount.toFixed(2)}`)
+          .join("\n");
+        parts.push(`Saved:\n${list}`);
+      }
       if (toDelete.length > 0)
         parts.push(
           `${toDelete.length} expense${toDelete.length > 1 ? "s" : ""} deleted`,
         );
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `✅ ${parts.join(" and ")}!` },
+        { role: "assistant", content: `✅ ${parts.join("\n\n")}` },
       ]);
     }
 
     setPendingToolCall(null);
     setLoading(false);
+  };
+
+  // ---- User removes one pending item ----
+  const removeItem = (index: number) => {
+    setPendingToolCall((prev) => {
+      if (!prev) return null;
+      const updated = prev.filter((_, i) => i !== index);
+      return updated.length > 0 ? updated : null;
+    });
   };
 
   // ---- User taps Cancel ----
@@ -141,5 +150,6 @@ export function useChat() {
     confirmAction,
     cancelAction,
     clearMessages,
+    removeItem,
   };
 }

@@ -6,4 +6,5 @@ export interface IPendingActionPanel {
   categories: TCategory[] | undefined;
   onConfirm: () => void;
   onCancel: () => void;
+  onRemoveItem: (index: number) => void;
 }

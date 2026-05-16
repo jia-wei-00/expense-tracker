@@ -1,5 +1,5 @@
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
@@ -9,6 +9,7 @@ import type { TPendingToolCall } from "@/types/hooks/use-agent";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import TransactionItem from "@/components/shared/TransactionItem";
+import { X } from "lucide-react-native";
 
 const ExpenseSeparator = () => <Divider className="my-1" />;
 
@@ -17,15 +18,17 @@ const PendingActionPanel = ({
   categories,
   onConfirm,
   onCancel,
+  onRemoveItem,
 }: IPendingActionPanel) => {
   const { t } = useTranslation("agent");
 
   const { addExpense, deleteExpense } = useMemo(() => {
-    return pendingToolCalls.reduce<
-      Record<TPendingToolCall["toolName"], TPendingToolCall["args"][]>
-    >(
-      (acc, item) => {
-        acc[item.toolName].push(item.args);
+    return pendingToolCalls.reduce<{
+      addExpense: { args: TPendingToolCall["args"]; originalIndex: number }[];
+      deleteExpense: { args: TPendingToolCall["args"]; originalIndex: number }[];
+    }>(
+      (acc, item, index) => {
+        acc[item.toolName].push({ args: item.args, originalIndex: index });
         return acc;
       },
       { addExpense: [], deleteExpense: [] },
@@ -34,19 +37,16 @@ const PendingActionPanel = ({
 
   const previewExpenses = useMemo(
     () =>
-      addExpense.map((item, index) => {
-        console.log(item);
-
-        return {
-          id: -(index + 1),
-          name: item.name ?? "",
-          amount: item.amount ?? 0,
-          category:
-            categories?.find((c) => c.id === item.category)?.name ?? "Others",
-          spend_date: item.spend_date ?? new Date().toISOString(),
-          is_expense: item.is_expense ?? true,
-        };
-      }),
+      addExpense.map(({ args: item, originalIndex }, index) => ({
+        id: -(index + 1),
+        originalIndex,
+        name: item.name ?? "",
+        amount: item.amount ?? 0,
+        category:
+          categories?.find((c) => c.id === item.category)?.name ?? "Others",
+        spend_date: item.spend_date ?? new Date().toISOString(),
+        is_expense: item.is_expense ?? true,
+      })),
     [addExpense, categories],
   );
 
@@ -61,24 +61,50 @@ const PendingActionPanel = ({
           {previewExpenses.map((item, index) => (
             <React.Fragment key={item.id}>
               {index > 0 && <ExpenseSeparator />}
-              <TransactionItem
-                id={item.id}
-                name={item.name}
-                category={item.category}
-                spend_date={item.spend_date}
-                is_expense={item.is_expense}
-                amount={item.amount}
-                test="AI"
-              />
+              <HStack className="items-center">
+                <Box className="flex-1">
+                  <TransactionItem
+                    id={item.id}
+                    name={item.name}
+                    category={item.category}
+                    spend_date={item.spend_date}
+                    is_expense={item.is_expense}
+                    amount={item.amount}
+                  />
+                </Box>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onPress={() => onRemoveItem(item.originalIndex)}
+                >
+                  <ButtonIcon as={X} className="text-typography-400" />
+                </Button>
+              </HStack>
             </React.Fragment>
           ))}
         </VStack>
       )}
 
       {deleteExpense.length > 0 && (
-        <Text className="text-sm text-typography-900 mb-3">
-          {t("pending.delete")}
-        </Text>
+        <VStack className="mb-3" space="xs">
+          {deleteExpense.map(({ args, originalIndex }) => (
+            <HStack
+              key={originalIndex}
+              className="items-center justify-between bg-background-0 rounded-xl px-3 py-2 border border-outline-50"
+            >
+              <Text className="text-sm text-typography-900">
+                {t("pending.delete")} #{args.id}
+              </Text>
+              <Button
+                variant="link"
+                size="sm"
+                onPress={() => onRemoveItem(originalIndex)}
+              >
+                <ButtonIcon as={X} className="text-typography-400" />
+              </Button>
+            </HStack>
+          ))}
+        </VStack>
       )}
 
       <HStack space="sm">

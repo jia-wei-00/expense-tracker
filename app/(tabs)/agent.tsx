@@ -32,6 +32,7 @@ export default function AgentScreen() {
     confirmAction,
     cancelAction,
     clearMessages,
+    removeItem,
   } = useChat();
 
   const displayMessages: TDisplayMessage[] = loading
@@ -111,6 +112,7 @@ export default function AgentScreen() {
                 categories={categories}
                 onConfirm={confirmAction}
                 onCancel={cancelAction}
+                onRemoveItem={removeItem}
               />
             )}
 

@@ -16,7 +16,6 @@ import { Plus } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
 import Chart from "@/components/home/chart";
 import MonthYearPicker from "@/components/home/MonthYearPicker";
-import { useCategory } from "@/hooks/useCategory";
 
 const Separator = () => <Divider className="my-2" />;
 
@@ -51,7 +50,7 @@ const Home = () => {
                 )}
                 keyExtractor={(item) => item.id.toString()}
               />
-              {expenses.length && (
+              {expenses.length > 0 && (
                 <Button
                   variant="link"
                   className="rounded-full my-1"

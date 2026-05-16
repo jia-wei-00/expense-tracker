@@ -24,8 +24,8 @@ export const useExpenseSubscription = () => {
           const getCategoryName = (categoryId: number | null) => {
             const categories = queryClient.getQueryData<TCategory[]>([
               QUERY_KEY.CATEGORIES,
-              userId,
             ]);
+
             if (!categoryId || !categories) return "Uncategorized";
             return (
               categories.find((c) => c.id === categoryId)?.name ??

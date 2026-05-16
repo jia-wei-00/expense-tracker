@@ -1,17 +1,20 @@
 import { Tabs } from "expo-router";
 import React from "react";
 import { HapticTab } from "@/components/haptic-tab";
-import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useSessionStore } from "@/store/useSession";
 import { useExpenseSubscription } from "@/hooks/useExpenseSubscription";
 import { Icon } from "@/components/ui/icon";
-import { LayoutDashboard, CreditCard, History, Settings, Bot } from "lucide-react-native";
+import {
+  LayoutDashboard,
+  CreditCard,
+  History,
+  Settings,
+  Bot,
+} from "lucide-react-native";
 import { useCategorySubscription } from "@/hooks/useCategorySubscription";
 import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
   const { t } = useTranslation("common");
   useExpenseSubscription();
   useCategorySubscription();
