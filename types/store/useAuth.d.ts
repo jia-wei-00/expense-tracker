@@ -3,17 +3,19 @@ export type TSignInPayload = {
   password: string;
 };
 
+export type TSignUpPayload = {
+  email: string;
+  password: string;
+};
+
+export type TSignUpResult = {
+  needsEmailConfirmation: boolean;
+};
+
 export interface IAuthStore {
   isAuthLoading: boolean;
-  /**
-   * Inherit Supabase onAuthStateChange will update the session store
-   */
   initialize: () => Promise<void>;
-  /**
-   * Sign in a user with email and password
-   * @param email
-   * @param password
-   */
   signIn: (payload: TSignInPayload) => Promise<void>;
+  signUp: (payload: TSignUpPayload) => Promise<TSignUpResult>;
   signOut: () => Promise<void>;
 }

@@ -5,6 +5,7 @@ export type TAddExpense = Database["public"]["Tables"]["expense"]["Insert"];
 
 interface IExpense extends TExpense {
   category: string | null;
+  pressable?: boolean;
 }
 
 export interface IExpensesStore {

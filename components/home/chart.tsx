@@ -58,7 +58,7 @@ const Chart = ({ type, month }: IChart) => {
   if (!pieData || pieData.length === 0) {
     return (
       <VStack className="py-2.5 flex-1">
-        <VStack className="m-5 p-4 rounded-2xl bg-background-0" space="md">
+        <VStack className="p-5 rounded-2xl bg-background-0" space="md">
           <Text bold size="lg">
             {title}
           </Text>

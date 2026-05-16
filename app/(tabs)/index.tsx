@@ -45,17 +45,21 @@ const Home = () => {
                 data={expenses.slice(0, 5)}
                 ItemSeparatorComponent={Separator}
                 ListEmptyComponent={<Text>{t("no.expenses")}</Text>}
-                renderItem={({ item }) => <TransactionItem {...item} />}
+                renderItem={({ item }) => (
+                  <TransactionItem {...item} pressable />
+                )}
                 keyExtractor={(item) => item.id.toString()}
               />
-              <Button
-                variant="link"
-                className="rounded-full my-1"
-                onPress={handleViewAll}
-                size="sm"
-              >
-                <ButtonText>{t("view.all")}</ButtonText>
-              </Button>
+              {expenses.length && (
+                <Button
+                  variant="link"
+                  className="rounded-full my-1"
+                  onPress={handleViewAll}
+                  size="sm"
+                >
+                  <ButtonText>{t("view.all")}</ButtonText>
+                </Button>
+              )}
             </Box>
           </VStack>
         </View>

@@ -32,7 +32,7 @@ const History = () => {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: IExpense }) => <TransactionItem {...item} />,
+    ({ item }: { item: IExpense }) => <TransactionItem {...item} pressable />,
     [],
   );
 

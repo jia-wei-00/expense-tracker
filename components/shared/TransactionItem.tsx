@@ -20,6 +20,7 @@ const TransactionItem = ({
   spend_date,
   is_expense,
   amount,
+  pressable,
 }: IExpense) => {
   const { t } = useTranslation("common");
   const safeCategory = safeParseAny(categorySchema, category, "Others");
@@ -28,6 +29,7 @@ const TransactionItem = ({
   const date = dayjs(spend_date).format("dddd • YYYY-MM-DD");
 
   const handlePress = () => {
+    if (!pressable) return;
     router.push({
       pathname: "/expense/expense-details/[id]",
       params: { id: String(id) },

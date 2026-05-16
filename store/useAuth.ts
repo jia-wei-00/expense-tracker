@@ -2,7 +2,6 @@ import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import { create } from "zustand";
 import type { IAuthStore } from "@/types/store/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * useAuth contain all the session related state and functions
@@ -20,6 +19,18 @@ export const useAuthStore = create<IAuthStore>((set) => ({
         useSessionStore.getState().setSession(session);
       },
     );
+  },
+  signUp: async ({ email, password }) => {
+    try {
+      set({ isAuthLoading: true });
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      return { needsEmailConfirmation: !data.session };
+    } catch (error) {
+      throw error;
+    } finally {
+      set({ isAuthLoading: false });
+    }
   },
   signIn: async ({ email, password }) => {
     try {

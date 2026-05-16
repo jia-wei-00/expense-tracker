@@ -11,11 +11,13 @@ import { FlashList, FlashListRef } from "@shopify/flash-list";
 import React, { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MessageSeparator = () => <Box className="h-1" />;
 
 export default function AgentScreen() {
   const { t } = useTranslation("agent");
+  const { bottom } = useSafeAreaInsets();
   const [inputText, setInputText] = useState("");
   const listRef = useRef<FlashListRef<TDisplayMessage>>(null);
 
@@ -59,13 +61,13 @@ export default function AgentScreen() {
   );
 
   return (
-    <Container title={t("title")}>
-      {() => (
-        <KeyboardAvoidingView
-          behavior="padding"
-          className="flex-1"
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-        >
+    <KeyboardAvoidingView
+      behavior="padding"
+      className="flex-1"
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : bottom}
+    >
+      <Container title={t("title")}>
+        {() => (
           <Box className="flex-1">
             {displayMessages.length === 0 ? (
               <Box className="flex-1 items-center justify-center">
@@ -86,25 +88,25 @@ export default function AgentScreen() {
                 }
               />
             )}
-          </Box>
 
-          {pendingToolCall && (
-            <PendingActionPanel
-              pendingToolCalls={pendingToolCall}
-              categories={categories}
-              onConfirm={confirmAction}
-              onCancel={cancelAction}
+            {pendingToolCall && (
+              <PendingActionPanel
+                pendingToolCalls={pendingToolCall}
+                categories={categories}
+                onConfirm={confirmAction}
+                onCancel={cancelAction}
+              />
+            )}
+
+            <ChatInput
+              value={inputText}
+              onChange={setInputText}
+              onSend={handleSend}
+              isDisabled={loading}
             />
-          )}
-
-          <ChatInput
-            value={inputText}
-            onChange={setInputText}
-            onSend={handleSend}
-            isDisabled={loading}
-          />
-        </KeyboardAvoidingView>
-      )}
-    </Container>
+          </Box>
+        )}
+      </Container>
+    </KeyboardAvoidingView>
   );
 }
