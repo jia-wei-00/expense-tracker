@@ -80,7 +80,6 @@ export const useInfiniteExpenses = (
       const { data, error } = await supabase
         .from("expense")
         .select("*,category(name)")
-        .eq("user_id", userId!)
         .order("spend_date", { ascending: false })
         .range(pageParam * limit, (pageParam + 1) * limit - 1);
 

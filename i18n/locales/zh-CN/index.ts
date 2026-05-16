@@ -5,4 +5,5 @@ export default {
   details: require("@/i18n/locales/zh-CN/details.json"),
   loan: require("@/i18n/locales/zh-CN/loan.json"),
   agent: require("@/i18n/locales/zh-CN/agent.json"),
+  settings: require("@/i18n/locales/zh-CN/settings.json"),
 };

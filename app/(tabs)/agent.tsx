@@ -3,6 +3,7 @@ import ChatInput from "@/components/agent/ChatInput";
 import PendingActionPanel from "@/components/agent/PendingActionPanel";
 import Container from "@/components/shared/Container";
 import { Box } from "@/components/ui/box";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useChat } from "@/hooks/useAgent";
 import { useCategory } from "@/hooks/useCategory";
@@ -30,7 +31,8 @@ export default function AgentScreen() {
     sendMessage,
     confirmAction,
     cancelAction,
-  } = useChat(categories ?? []);
+    clearMessages,
+  } = useChat();
 
   const displayMessages: TDisplayMessage[] = loading
     ? [...messages, { role: "assistant", content: "", isLoading: true }]
@@ -69,6 +71,20 @@ export default function AgentScreen() {
       <Container title={t("title")}>
         {() => (
           <Box className="flex-1">
+            {messages.length > 0 && (
+              <Box className="items-end pb-1">
+                <Button
+                  variant="link"
+                  size="sm"
+                  onPress={clearMessages}
+                  isDisabled={loading}
+                >
+                  <ButtonText className="text-typography-400">
+                    {t("clear")}
+                  </ButtonText>
+                </Button>
+              </Box>
+            )}
             {displayMessages.length === 0 ? (
               <Box className="flex-1 items-center justify-center">
                 <Text className="text-typography-400 text-center text-sm leading-relaxed">

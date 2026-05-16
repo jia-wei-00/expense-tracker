@@ -1,16 +1,16 @@
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
+import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
+import { Divider } from "@/components/ui/divider";
 import { IPendingActionPanel } from "@/types/components/agent/pending-action-panel";
 import type { TPendingToolCall } from "@/types/hooks/use-agent";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { FlashList } from "@shopify/flash-list";
 import TransactionItem from "@/components/shared/TransactionItem";
-import { Divider } from "../ui/divider";
 
-const ExpenseSeparator = () => <Divider className="my-2" />;
+const ExpenseSeparator = () => <Divider className="my-1" />;
 
 const PendingActionPanel = ({
   pendingToolCalls,
@@ -28,34 +28,26 @@ const PendingActionPanel = ({
         acc[item.toolName].push(item.args);
         return acc;
       },
-      {
-        addExpense: [],
-        deleteExpense: [],
-      },
+      { addExpense: [], deleteExpense: [] },
     );
   }, [pendingToolCalls]);
 
-  console.log("addExpense", addExpense);
-  console.log("deleteExpense", deleteExpense);
-
   const previewExpenses = useMemo(
     () =>
-      addExpense.map((item, index) => ({
-        id: -(index + 1),
-        name: item.name ?? "",
-        amount: item.amount ?? 0,
-        category:
-          categories?.find((category) => category.id === item.category)?.name ??
-          "Others",
-        spend_date: item.spend_date ?? new Date().toISOString(),
-        is_expense: item.is_expense ?? true,
-      })),
-    [addExpense, categories],
-  );
+      addExpense.map((item, index) => {
+        console.log(item);
 
-  const previewListHeight = Math.min(
-    Math.max(previewExpenses.length * 76, 96),
-    320,
+        return {
+          id: -(index + 1),
+          name: item.name ?? "",
+          amount: item.amount ?? 0,
+          category:
+            categories?.find((c) => c.id === item.category)?.name ?? "Others",
+          spend_date: item.spend_date ?? new Date().toISOString(),
+          is_expense: item.is_expense ?? true,
+        };
+      }),
+    [addExpense, categories],
   );
 
   return (
@@ -64,29 +56,24 @@ const PendingActionPanel = ({
         {t("pending.title")}
       </Text>
 
-      {/* {addExpense.length > 0 && (
-        <FlashList
-          data={previewExpenses}
-          renderItem={({ item }) => (
-            <TransactionItem
-              {...item}
-              created_at={item.spend_date}
-              user_id={null}
-            />
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          ItemSeparatorComponent={ExpenseSeparator}
-          ListEmptyComponent={<Text className="px-3">{t("no.expenses")}</Text>}
-          contentContainerClassName="bg-background-0 p-3 rounded-2xl border border-outline-50 gap-2"
-          style={{ height: previewListHeight }}
-          scrollEventThrottle={16}
-          onEndReachedThreshold={0.5}
-        />
-      )} */}
-
-      {addExpense.map((item, index) => (
-        <TransactionItem key={index} {...item} user_id={null} />
-      ))}
+      {previewExpenses.length > 0 && (
+        <VStack className="bg-background-0 rounded-2xl border border-outline-50 px-3 py-2 mb-3">
+          {previewExpenses.map((item, index) => (
+            <React.Fragment key={item.id}>
+              {index > 0 && <ExpenseSeparator />}
+              <TransactionItem
+                id={item.id}
+                name={item.name}
+                category={item.category}
+                spend_date={item.spend_date}
+                is_expense={item.is_expense}
+                amount={item.amount}
+                test="AI"
+              />
+            </React.Fragment>
+          ))}
+        </VStack>
+      )}
 
       {deleteExpense.length > 0 && (
         <Text className="text-sm text-typography-900 mb-3">
@@ -103,13 +90,9 @@ const PendingActionPanel = ({
         >
           <ButtonText>{t("cancel")}</ButtonText>
         </Button>
-        {/* <Button
-          size="sm"
-          onPress={addExpense ? handleApprove : () => onConfirm(args)}
-          className="flex-1"
-        >
+        <Button size="sm" onPress={onConfirm} className="flex-1">
           <ButtonText>{t("confirm")}</ButtonText>
-        </Button> */}
+        </Button>
       </HStack>
     </Box>
   );

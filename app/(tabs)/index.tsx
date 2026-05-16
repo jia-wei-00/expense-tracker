@@ -16,6 +16,7 @@ import { Plus } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
 import Chart from "@/components/home/chart";
 import MonthYearPicker from "@/components/home/MonthYearPicker";
+import { useCategory } from "@/hooks/useCategory";
 
 const Separator = () => <Divider className="my-2" />;
 

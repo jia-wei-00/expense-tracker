@@ -3,11 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import { QUERY_KEY } from "@/constants/query-key";
 
-const fetchCategories = async (userId: string) => {
-  const { data, error } = await supabase
-    .from("expense_category")
-    .select("*")
-    .eq("user_id", userId);
+const fetchCategories = async () => {
+  const { data, error } = await supabase.from("expense_category").select("*");
 
   if (error) throw error;
   return data;
@@ -17,8 +14,8 @@ export const useCategory = () => {
   const userId = useSessionStore.getState().getUserId();
 
   return useQuery({
-    queryKey: [QUERY_KEY.CATEGORIES, userId],
-    queryFn: () => fetchCategories(userId!),
+    queryKey: [QUERY_KEY.CATEGORIES],
+    queryFn: () => fetchCategories(),
     enabled: !!userId,
     staleTime: 1000 * 60 * 5,
   });

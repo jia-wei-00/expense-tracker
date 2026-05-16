@@ -4,6 +4,6 @@ import type { TCategory } from "@/types/store/useCategory";
 export interface IPendingActionPanel {
   pendingToolCalls: TPendingToolCall[];
   categories: TCategory[] | undefined;
-  onConfirm: (args: TPendingToolCall["args"]) => void;
+  onConfirm: () => void;
   onCancel: () => void;
 }

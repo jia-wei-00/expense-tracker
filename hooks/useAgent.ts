@@ -4,10 +4,9 @@ import {
   TPendingToolCall,
   TAiChatResponse,
 } from "@/types/hooks/use-agent";
-import type { TCategory } from "@/types/store/useCategory";
 import { useState } from "react";
 
-export function useChat(categories: TCategory[]) {
+export function useChat() {
   const [messages, setMessages] = useState<TMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [pendingToolCall, setPendingToolCall] = useState<
@@ -28,7 +27,6 @@ export function useChat(categories: TCategory[]) {
       {
         body: {
           messages: updated,
-          categories,
         },
       },
     );
@@ -53,72 +51,64 @@ export function useChat(categories: TCategory[]) {
       ]);
     }
 
-    console.log("AI response:", data);
-
     // If AI wants to write to DB, hold it for user confirmation
     if (data?.pendingToolCalls) {
-      console.log("AI requested tool call:", data.pendingToolCalls);
-      setPendingToolCall(data?.pendingToolCalls);
+      setPendingToolCall(data.pendingToolCalls);
     }
 
     setLoading(false);
   };
 
-  // ---- User taps Approve (with optional edited values) ----
-  const confirmAction = async (overrides?: TPendingToolCall["args"]) => {
-    if (!pendingToolCall) return;
-
-    const { toolName } = pendingToolCall;
-    const args = overrides ?? pendingToolCall.args;
+  // ---- User taps Confirm ----
+  const confirmAction = async () => {
+    if (!pendingToolCall || pendingToolCall.length === 0) return;
     setLoading(true);
 
-    if (toolName === "addExpense") {
-      const { error } = await supabase.from("expense").insert({
-        name: args.name,
-        amount: args.amount,
-        category: args.category,
-        is_expense: args.is_expense,
-        spend_date: args.spend_date ?? new Date().toISOString(),
-      });
+    const toAdd = pendingToolCall
+      .filter((tc) => tc.toolName === "addExpense")
+      .map((tc) => ({
+        name: tc.args.name!,
+        amount: tc.args.amount!,
+        category: tc.args.category!,
+        is_expense: tc.args.is_expense ?? true,
+        spend_date: tc.args.spend_date ?? new Date().toISOString(),
+      }));
 
-      if (error) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: `❌ Failed to save: ${error.message}` },
-        ]);
-      } else {
-        const categoryName =
-          categories.find((c) => c.id === args.category)?.name ?? "Unknown";
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: `✅ ${args.is_expense ? "Expense" : "Income"} of RM${args.amount} for ${categoryName} saved!`,
-          },
-        ]);
-      }
-    }
+    const toDelete = pendingToolCall
+      .filter((tc) => tc.toolName === "deleteExpense")
+      .map((tc) => tc.args.id!);
 
-    if (toolName === "deleteExpense") {
-      const { error } = await supabase
-        .from("expense")
-        .delete()
-        .eq("id", args.id!);
+    console.log(toDelete, "toDelete");
 
-      if (error) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: `❌ Failed to delete: ${error.message}`,
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "🗑️ Expense deleted successfully!" },
-        ]);
-      }
+    const [addResult, ...deleteResults] = await Promise.all([
+      toAdd.length > 0 ? supabase.from("expense").insert(toAdd) : null,
+      ...toDelete.map((id) => supabase.from("expense").delete().eq("id", id)),
+    ]);
+
+    const hasError = addResult?.error || deleteResults.some((r) => r.error);
+
+    if (hasError) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "❌ Some actions failed. Please try again.",
+        },
+      ]);
+    } else {
+      const parts: string[] = [];
+      if (toAdd.length > 0)
+        parts.push(
+          `${toAdd.length} expense${toAdd.length > 1 ? "s" : ""} saved`,
+        );
+      if (toDelete.length > 0)
+        parts.push(
+          `${toDelete.length} expense${toDelete.length > 1 ? "s" : ""} deleted`,
+        );
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `✅ ${parts.join(" and ")}!` },
+      ]);
     }
 
     setPendingToolCall(null);

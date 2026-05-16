@@ -21,10 +21,13 @@ const TransactionItem = ({
   is_expense,
   amount,
   pressable,
+  test,
 }: IExpense) => {
   const { t } = useTranslation("common");
   const safeCategory = safeParseAny(categorySchema, category, "Others");
   const IconComponent = CATEGORY_ICON_MAP[safeCategory];
+
+  if (test) console.log(test, category);
 
   const date = dayjs(spend_date).format("dddd • YYYY-MM-DD");
 
