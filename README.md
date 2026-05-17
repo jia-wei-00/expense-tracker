@@ -1,50 +1,122 @@
-# Welcome to your Expo app 👋
+# Expense Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A personal finance tracking app built with React Native and Expo. Track expenses and income, manage loans, and use an AI assistant to log transactions by text or photo.
 
-## Get started
+## Features
 
-1. Install dependencies
+### Dashboard (Home)
+- Monthly expense and income summary with interactive donut pie charts
+- Category breakdown with color-coded legend
+- Month selector to navigate between months
+- Recent transactions list with quick access to details
 
-   ```bash
-   npm install
-   ```
+### Expense & Income Management
+- Add transactions with name, amount, category, date, and optional description
+- Edit or delete existing transactions
+- Supports both expense and income types
+- Per-user categories (expense and income types)
 
-2. Start the app
+### Transaction History
+- Paginated list of all transactions across all months
+- Bulk select and delete with checkbox UI
+- Tap any item to view full details and edit
 
-   ```bash
-   npx expo start
-   ```
+### Loan Tracker
+- Create named loan accounts
+- Record individual payment entries per loan
+- Track loan repayment history
 
-In the output, you'll find options to open the app in a
+### AI Agent
+- Chat-based assistant powered by OpenRouter (OpenAI-compatible)
+- Add or delete transactions by describing them in natural language
+- Upload a photo (receipt, bill, screenshot) — the AI reads it and extracts transaction details
+- List and summarize your expenses by asking in plain language
+- Confirmation UI before any write action is committed to the database
+- Supports per-item removal from a pending batch before confirming
+- Markdown-rendered AI responses
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Settings
+- Language switcher: English and Chinese (简体中文)
+- Sign out
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Tech Stack
 
-## Get a fresh project
+| Layer | Technology |
+|---|---|
+| Framework | React Native + Expo (v55) |
+| Routing | Expo Router (file-based) |
+| Backend | Supabase (PostgreSQL, Auth, Realtime, Storage, Edge Functions) |
+| AI | OpenRouter via OpenAI SDK (Deno edge function) |
+| State | Zustand (auth) + TanStack Query (server data) |
+| UI | Gluestack UI v3 + NativeWind v4 (Tailwind CSS) |
+| Forms | react-hook-form + Zod |
+| i18n | react-i18next (en-US, zh-CN) |
+| Storage | React Native MMKV |
+| Charts | react-native-gifted-charts |
 
-When you're ready, run:
+## Getting Started
 
-```bash
-npm run reset-project
+### Prerequisites
+
+- Node.js 18+
+- Expo CLI
+- Android Studio or Xcode (for device emulation)
+- A Supabase project
+
+### Environment Variables
+
+Create a `.env` file at the root:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+EXPO_PUBLIC_MMKV_ENCRYPTION_KEY=your_mmkv_key
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Set the following as Supabase Edge Function secrets:
 
-## Learn more
+```
+OPENROUTER_API_KEY=your_openrouter_key
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### Install & Run
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm install
+npm start          # Expo dev server
+npm run android    # Build & run on Android emulator
+npm run ios        # Build & run on iOS simulator
+```
 
-## Join the community
+### Supabase Setup
 
-Join our community of developers creating universal apps.
+```bash
+supabase start     # Start local Supabase stack
+supabase functions deploy ai-chat
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Create a public storage bucket named `chat-images` in the Supabase dashboard for AI image uploads (8 MB limit, allowed types: JPEG, PNG, WebP, HEIC).
+
+## Project Structure
+
+```
+app/
+  (tabs)/         # Bottom tab screens: home, loan, agent, history, settings
+  expense/        # Add, view, and edit expense screens
+  loan/           # Loan detail screen
+  login.tsx       # Auth screen (sign in / sign up)
+components/
+  agent/          # Chat UI: bubble, input, pending action panel
+  history/        # History list item
+  home/           # Dashboard chart and legend
+  shared/         # Reusable components (Container, TransactionItem, etc.)
+  ui/             # Gluestack UI primitives
+hooks/            # TanStack Query hooks and Supabase subscriptions
+store/            # Zustand stores (auth, session)
+supabase/
+  functions/
+    ai-chat/      # Deno edge function — OpenAI SDK + OpenRouter
+i18n/
+  locales/        # en-US and zh-CN translation files
+types/            # TypeScript interfaces for components, hooks, store
+```
