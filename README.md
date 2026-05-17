@@ -10,7 +10,7 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 - Category breakdown with color-coded legend
 - Month selector to navigate between months
 - Recent transactions list with quick access to details
-<img width="413" height="932" alt="image" src="https://github.com/user-attachments/assets/c089133a-50e1-41b2-b2ad-4399a8341b4f" />
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/c089133a-50e1-41b2-b2ad-4399a8341b4f" />
 
 
 ### Expense & Income Management
@@ -23,13 +23,13 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 - Paginated list of all transactions across all months
 - Bulk select and delete with checkbox UI
 - Tap any item to view full details and edit
-<img width="418" height="927" alt="image" src="https://github.com/user-attachments/assets/d5753446-c1fb-40af-b525-00e3be8cb294" />
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/d5753446-c1fb-40af-b525-00e3be8cb294" />
 
 ### Loan Tracker
 - Create named loan accounts
 - Record individual payment entries per loan
 - Track loan repayment history
-<img width="414" height="927" alt="image" src="https://github.com/user-attachments/assets/47f0a2df-71de-4f94-941d-3186b0804b82" />
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/47f0a2df-71de-4f94-941d-3186b0804b82" />
 
 ### AI Agent
 - Chat-based assistant powered by OpenRouter (OpenAI-compatible)
