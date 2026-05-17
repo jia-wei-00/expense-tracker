@@ -1,3 +1,4 @@
+
 # Expense Tracker
 
 A personal finance tracking app built with React Native and Expo. Track expenses and income, manage loans, and use an AI assistant to log transactions by text or photo.
@@ -9,6 +10,8 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 - Category breakdown with color-coded legend
 - Month selector to navigate between months
 - Recent transactions list with quick access to details
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/c089133a-50e1-41b2-b2ad-4399a8341b4f" />
+
 
 ### Expense & Income Management
 - Add transactions with name, amount, category, date, and optional description
@@ -20,11 +23,13 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 - Paginated list of all transactions across all months
 - Bulk select and delete with checkbox UI
 - Tap any item to view full details and edit
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/d5753446-c1fb-40af-b525-00e3be8cb294" />
 
 ### Loan Tracker
 - Create named loan accounts
 - Record individual payment entries per loan
 - Track loan repayment history
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/47f0a2df-71de-4f94-941d-3186b0804b82" />
 
 ### AI Agent
 - Chat-based assistant powered by OpenRouter (OpenAI-compatible)
@@ -34,6 +39,7 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 - Confirmation UI before any write action is committed to the database
 - Supports per-item removal from a pending batch before confirming
 - Markdown-rendered AI responses
+<img width="300" alt="Screenrecorder-2026-05-17-20-09-26-79" src="https://github.com/user-attachments/assets/99713192-2a57-42e3-9a75-a36a60bb96c9" />
 
 ### Settings
 - Language switcher: English and Chinese (简体中文)
