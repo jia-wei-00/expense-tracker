@@ -6,7 +6,9 @@ import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useChat } from "@/hooks/useAgent";
+import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCategory } from "@/hooks/useCategory";
+import { useErrorToast } from "@/hooks/useErrorToast";
 import { TDisplayMessage } from "@/types/hooks/use-agent";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
 import React, { useCallback, useRef, useState } from "react";
@@ -20,9 +22,12 @@ export default function AgentScreen() {
   const { t } = useTranslation("agent");
   const { bottom } = useSafeAreaInsets();
   const [inputText, setInputText] = useState("");
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const listRef = useRef<FlashListRef<TDisplayMessage>>(null);
 
   const { data: categories } = useCategory();
+  const { showError } = useErrorToast();
+  const { pickAndUpload, isUploading } = useImageUpload();
 
   const {
     messages,
@@ -39,13 +44,24 @@ export default function AgentScreen() {
     ? [...messages, { role: "assistant", content: "", isLoading: true }]
     : messages;
 
+  const handlePickImage = async () => {
+    try {
+      const url = await pickAndUpload();
+      if (url) setPendingImageUrl(url);
+    } catch (err: any) {
+      showError(err?.message ?? t("error"));
+    }
+  };
+
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
-    if (!text || loading) return;
+    if ((!text && !pendingImageUrl) || loading) return;
     setInputText("");
-    await sendMessage(text);
+    const imageUrl = pendingImageUrl;
+    setPendingImageUrl(null);
+    await sendMessage(text, imageUrl ?? undefined);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [inputText, loading, sendMessage]);
+  }, [inputText, loading, pendingImageUrl, sendMessage]);
 
   const renderMessage = useCallback(
     ({ item }: { item: TDisplayMessage }) => (
@@ -121,6 +137,10 @@ export default function AgentScreen() {
               onChange={setInputText}
               onSend={handleSend}
               isDisabled={loading}
+              pendingImageUrl={pendingImageUrl}
+              isUploading={isUploading}
+              onPickImage={handlePickImage}
+              onRemoveImage={() => setPendingImageUrl(null)}
             />
           </Box>
         )}

@@ -1,18 +1,110 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { generateText } from "npm:ai";
-import { createGoogleGenerativeAI } from "npm:@ai-sdk/google";
-import { z } from "npm:zod";
+import OpenAI from "npm:openai";
 
-const google = createGoogleGenerativeAI({
-  apiKey: Deno.env.get("GEMINI_API_KEY")!,
+const openai = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: Deno.env.get("OPENROUTER_API_KEY")!,
 });
+
+const WRITE_TOOLS = ["addExpense", "deleteExpense"];
+
+const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "addExpense",
+      description:
+        "Extract and return a complete expense or income record from the user's message. Fill every required field with normalized values.",
+      parameters: {
+        type: "object",
+        required: ["name", "amount", "category_id", "is_expense", "spend_date"],
+        additionalProperties: false,
+        properties: {
+          name: {
+            type: "string",
+            description:
+              'Extract a short transaction name from the user input. Use only the core label, not the full sentence. Do not include amount, currency, date, or filler words. Examples: "add coffee expense RM50" -> "coffee", "spent RM18 on grab ride" -> "grab ride", "salary came in" -> "salary". You MUST return a name this is REQUIRED!',
+          },
+          description: {
+            type: "string",
+            description:
+              "Optional extra note only if the user explicitly provides useful detail.",
+          },
+          amount: {
+            type: "number",
+            description: "Amount in MYR as a positive number only. Example: 16.5",
+          },
+          category_id: {
+            type: "integer",
+            description:
+              "Numeric category ID from the provided category list only. Must match the intended transaction type.",
+          },
+          is_expense: {
+            type: "boolean",
+            description:
+              "true for expense, false for income. Must match the selected category's is_expense value.",
+          },
+          spend_date: {
+            type: "string",
+            description:
+              'Transaction datetime in ISO 8601 format for the field "spend_date". Convert clearly understood user dates into ISO 8601 datetime. Examples: "2026-05-01" -> "2026-05-01T00:00:00", "2026-05-01 8pm" -> "2026-05-01T20:00:00". If the user does not provide a date, use the current datetime. If the user provides an ambiguous or unclear date format, such as "01-05-2026" where day/month order is uncertain, do not guess; ask for clarification instead.',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "deleteExpense",
+      description: "Propose deleting an expense record by ID.",
+      parameters: {
+        type: "object",
+        required: ["id"],
+        additionalProperties: false,
+        properties: {
+          id: { type: "integer", description: "The expense ID to delete" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "listExpenses",
+      description: "List the user's expenses with optional filters.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          category: { type: "integer" },
+          from: { type: "string", description: "Start date in ISO format" },
+          to: { type: "string", description: "End date in ISO format" },
+          limit: { type: "integer", default: 10 },
+        },
+      },
+    },
+  },
+];
+
+function normalizeAddExpenseArgs(raw: Record<string, unknown>) {
+  return {
+    name: String(raw.name ?? raw.description ?? raw.title ?? ""),
+    amount: Number(raw.amount ?? 0),
+    category: Number(raw.category ?? raw.category_id ?? 0),
+    is_expense: raw.is_expense !== undefined ? Boolean(raw.is_expense) : true,
+    spend_date: String(raw.spend_date ?? raw.date ?? new Date().toISOString()),
+  };
+}
+
+const CORS = { "Access-Control-Allow-Origin": "*" };
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        ...CORS,
         "Access-Control-Allow-Headers": "authorization, content-type",
       },
     });
@@ -43,17 +135,12 @@ Deno.serve(async (req: Request) => {
       .select("id, name, is_expense")
       .order("name");
 
-    console.log(categories, "categories from supabase db");
-
     if (catError) {
       console.error("Failed to fetch categories:", catError.message);
-      return Response.json(
-        { error: "Failed to load categories" },
-        { status: 500 },
-      );
+      return Response.json({ error: "Failed to load categories" }, { status: 500 });
     }
 
-    const { messages } = await req.json();
+    const { messages: rawMessages } = await req.json();
 
     const categoryText = (categories ?? [])
       .map(
@@ -62,191 +149,121 @@ Deno.serve(async (req: Request) => {
       )
       .join("\n");
 
-    const result = await generateText({
-      model: google("gemini-2.5-flash-lite"),
-      system: `You are a friendly expense tracking assistant for ${user.email}.
-              Today is ${new Date().toLocaleDateString("en-MY", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
-              Currency is MYR (Malaysian Ringgit).
-              The user's available categories:
-              ${categoryText}
-
-            Rules:
-            - Always use the category ID (number) when calling tools, not the name.
-            - Match the user's description to the closest category.
-            - If unsure which category fits, ask for clarification.
-            - For ADD or DELETE actions, call the tool immediately — do NOT write a reply message. The app will show a confirmation UI to the user.
-            - For READ actions (list, summary), just answer directly.
-            - Keep replies short and friendly.`,
-      messages,
-      tools: {
-        addExpense: {
-          description:
-            "Extract and return a complete expense or income record from the user's message. Fill every required field with normalized values.",
-          parameters: z.object({
-            name: z
-              .string()
-              .min(1)
-              .max(80)
-              .describe(
-                'Extract a short transaction name from the user input. Use only the core label, not the full sentence. Do not include amount, currency, date, or filler words. Examples: "add coffee expense RM50" -> "coffee", "spent RM18 on grab ride" -> "grab ride", "salary came in" -> "salary".',
-              ),
-            description: z
-              .string()
-              .max(200)
-              .optional()
-              .describe(
-                "Optional extra note only if the user explicitly provides useful detail.",
-              ),
-            amount: z
-              .number()
-              .positive()
-              .finite()
-              .describe(
-                "Amount in MYR as a positive number only. Example: 16.5",
-              ),
-            category_id: z
-              .number()
-              .int()
-              .positive()
-              .describe(
-                "Numeric category ID from the provided category list only. Must match the intended transaction type.",
-              ),
-            is_expense: z
-              .boolean()
-              .describe(
-                "true for expense, false for income. Must match the selected category's is_expense value.",
-              ),
-            spend_date: z
-              .string()
-              .datetime()
-              .describe(
-                "Transaction datetime in ISO 8601 format. Use current datetime only if the user did not specify one.",
-              ),
-            date: z.string().optional(),
-          }),
-        },
-        deleteExpense: {
-          description: "Propose deleting an expense record by ID",
-          parameters: z.object({
-            id: z.number().describe("The expense ID to delete"),
-          }),
-          // No execute() — frontend handles on confirm
-        },
-        listExpenses: {
-          description: "List the user's expenses with optional filters",
-          parameters: z.object({
-            category: z.number().optional(),
-            from: z.string().optional().describe("Start date in ISO format"),
-            to: z.string().optional().describe("End date in ISO format"),
-            limit: z.number().optional().default(10),
-          }),
-          execute: async ({ category, from, to, limit }) => {
-            let query = supabase
-              .from("expense")
-              .select(
-                "id, name, amount, spend_date, is_expense, expense_category(name)",
-              )
-              .order("spend_date", { ascending: false })
-              .limit(limit ?? 10);
-
-            if (category) query = query.eq("category", category);
-            if (from) query = query.gte("spend_date", from);
-            if (to) query = query.lte("spend_date", to);
-
-            const { data, error } = await query;
-            if (error) return { error: error.message };
-            return data;
-          },
-        },
-        getMonthlySummary: {
-          description:
-            "Get total spending grouped by category for a given month",
-          parameters: z.object({
-            month: z.string().describe("Month in YYYY-MM format, e.g. 2026-04"),
-          }),
-          execute: async ({ month }) => {
-            const { data, error } = await supabase.rpc("get_monthly_summary", {
-              p_user_id: user.id,
-              p_month: month,
-            });
-            if (error) return { error: error.message };
-            return data;
-          },
-        },
-      },
-      maxSteps: 3,
+    // Build OpenAI-format message history
+    const history: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = (
+      rawMessages ?? []
+    ).map((msg: any) => {
+      if (typeof msg.content === "string") {
+        return { role: msg.role, content: msg.content };
+      }
+      return {
+        role: msg.role,
+        content: (msg.content as any[]).map((part: any) => {
+          if (part.type === "text") return { type: "text", text: part.text };
+          if (part.type === "image") {
+            return { type: "image_url", image_url: { url: part.url } };
+          }
+          return part;
+        }),
+      };
     });
 
-    // ---- Check for unexecuted write tool calls ----
-    const WRITE_TOOLS = ["addExpense", "deleteExpense"];
-
-    function normalizeAddExpenseArgs(raw: Record<string, unknown>) {
-      return {
-        name: String(raw.name ?? raw.description ?? raw.title ?? ""),
-        amount: Number(raw.amount ?? 0),
-        category: Number(raw.category ?? raw.category_id ?? 0),
-        is_expense:
-          raw.is_expense !== undefined ? Boolean(raw.is_expense) : true,
-        spend_date: String(
-          raw.spend_date ?? raw.date ?? new Date().toISOString(),
-        ),
-      };
-    }
-
-    console.log(
-      "Full steps:",
-      JSON.stringify(
-        result.steps.map((s) => ({
-          text: s.text,
-          toolCalls: s.toolCalls,
-          toolResults: s.toolResults,
-          finishReason: s.finishReason,
-        })),
-        null,
-        2,
-      ),
-    );
-
-    const pendingToolCalls = result.steps
-      .flatMap((step) => step.toolCalls ?? [])
-      .filter((tc) => WRITE_TOOLS.includes(tc.toolName));
-
-    // ✅ If write action detected — return pendingToolCall only, no message needed
-    if (pendingToolCalls.length > 0) {
-      return Response.json(
-        {
-          message: null,
-          pendingToolCalls: pendingToolCalls.map((tc) => {
-            const raw = ((tc as any).input ?? tc.args ?? {}) as Record<
-              string,
-              unknown
-            >;
-            return {
-              toolName: tc.toolName,
-              args:
-                tc.toolName === "addExpense"
-                  ? normalizeAddExpenseArgs(raw)
-                  : raw,
-            };
-          }),
-        },
-        { headers: { "Access-Control-Allow-Origin": "*" } },
-      );
-    }
-
-    // ✅ No write action — return AI reply as normal
-    return Response.json(
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       {
-        message: result.text,
-        pendingToolCall: null,
+        role: "system",
+        content: `You are a friendly expense tracking assistant for ${user.email}.
+Today is ${new Date().toLocaleDateString("en-MY", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+Currency is MYR (Malaysian Ringgit).
+The user's available categories:
+${categoryText}
+
+Rules:
+- Always use the category ID (number) when calling tools, not the name.
+- Match the user's description to the closest category.
+- If unsure which category fits, ask for clarification.
+- For ADD or DELETE actions, call the tool immediately — do NOT write a reply message. The app will show a confirmation UI to the user.
+- For READ actions (list, summary), just answer directly.
+- Keep replies short and friendly.`,
       },
-      { headers: { "Access-Control-Allow-Origin": "*" } },
+      ...history,
+    ];
+
+    let lastResponseText: string | null = null;
+
+    for (let step = 0; step < 3; step++) {
+      const response = await openai.chat.completions.create({
+        model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        messages,
+        tools: TOOLS,
+        tool_choice: "auto",
+      });
+
+      const msg = response.choices[0].message;
+      messages.push(msg);
+      lastResponseText = typeof msg.content === "string" ? msg.content : null;
+
+      if (!msg.tool_calls || msg.tool_calls.length === 0) break;
+
+      const pendingWriteToolCalls: { toolName: string; args: Record<string, unknown> }[] = [];
+      const toolResults: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = [];
+
+      for (const tc of msg.tool_calls) {
+        const args = JSON.parse(tc.function.arguments ?? "{}");
+
+        if (WRITE_TOOLS.includes(tc.function.name)) {
+          pendingWriteToolCalls.push({
+            toolName: tc.function.name,
+            args:
+              tc.function.name === "addExpense"
+                ? normalizeAddExpenseArgs(args)
+                : args,
+          });
+          toolResults.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: "pending_confirmation",
+          });
+        } else if (tc.function.name === "listExpenses") {
+          let query = supabase
+            .from("expense")
+            .select(
+              "id, name, amount, spend_date, is_expense, expense_category(name)",
+            )
+            .order("spend_date", { ascending: false })
+            .limit(args.limit ?? 10);
+
+          if (args.category) query = query.eq("category", args.category);
+          if (args.from) query = query.gte("spend_date", args.from);
+          if (args.to) query = query.lte("spend_date", args.to);
+
+          const { data, error } = await query;
+          toolResults.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: JSON.stringify(error ? { error: error.message } : data),
+          });
+        }
+      }
+
+      if (pendingWriteToolCalls.length > 0) {
+        return Response.json(
+          { message: null, pendingToolCalls: pendingWriteToolCalls },
+          { headers: CORS },
+        );
+      }
+
+      messages.push(...toolResults);
+    }
+
+    return Response.json(
+      { message: lastResponseText, pendingToolCall: null },
+      { headers: CORS },
     );
   } catch (err) {
     console.error(err);
     return Response.json(
       { error: "Internal server error" },
-      { status: 500, headers: { "Access-Control-Allow-Origin": "*" } },
+      { status: 500, headers: CORS },
     );
   }
 });

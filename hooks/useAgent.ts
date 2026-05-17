@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import {
   TMessage,
+  TMessageContentPart,
   TPendingToolCall,
   TAiChatResponse,
 } from "@/types/hooks/use-agent";
@@ -13,11 +14,22 @@ export function useChat() {
     TPendingToolCall[] | null
   >(null);
 
-  const sendMessage = async (userText: string) => {
-    if (loading || !userText.trim()) return;
+  const sendMessage = async (userText: string, imageUrl?: string) => {
+    if (loading || (!userText.trim() && !imageUrl)) return;
 
-    const userMsg: TMessage = { role: "user", content: userText.trim() };
+    let content: TMessage["content"];
+    if (imageUrl) {
+      const parts: TMessageContentPart[] = [];
+      if (userText.trim()) parts.push({ type: "text", text: userText.trim() });
+      parts.push({ type: "image", url: imageUrl });
+      content = parts;
+    } else {
+      content = userText.trim();
+    }
+
+    const userMsg: TMessage = { role: "user", content };
     const updated = [...messages, userMsg];
+    console.log(updated);
     setMessages(updated);
     setLoading(true);
     setPendingToolCall(null); // clear any previous pending action

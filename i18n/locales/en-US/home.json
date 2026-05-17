@@ -11,5 +11,13 @@
   "chart.total": "Total RM{{total}}",
   "chart.empty": "No data found",
   "month": "Month",
-  "year": "Year"
+  "year": "Year",
+  "select": "Select",
+  "select.cancel": "Cancel",
+  "select.all": "Select All",
+  "select.deselect.all": "Deselect All",
+  "select.count": "{{count}} selected",
+  "select.delete": "Delete ({{count}})",
+  "select.confirm.title": "Delete expenses",
+  "select.confirm.description": "Delete {{count}} expense(s)? This cannot be undone."
 }

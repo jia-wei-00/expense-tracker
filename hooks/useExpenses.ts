@@ -184,3 +184,20 @@ export const useDeleteExpense = () => {
     onError: () => showError(t("error.delete")),
   });
 };
+
+export const useBulkDeleteExpenses = () => {
+  const queryClient = useQueryClient();
+  const { showError } = useErrorToast();
+  const { t } = useTranslation("common");
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      const { error } = await supabase.from("expense").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY.EXPENSES] });
+      queryClient.invalidateQueries({ queryKey: [dayjs().format("YYYY-MM")] });
+    },
+    onError: () => showError(t("error.delete")),
+  });
+};

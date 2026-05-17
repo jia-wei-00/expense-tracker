@@ -1,6 +1,10 @@
+export type TMessageContentPart =
+  | { type: "text"; text: string }
+  | { type: "image"; url: string };
+
 export type TMessage = {
   role: "user" | "assistant";
-  content: string;
+  content: string | TMessageContentPart[];
 };
 
 export type TDisplayMessage = TMessage & { isLoading?: boolean };

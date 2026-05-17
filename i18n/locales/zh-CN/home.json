@@ -11,5 +11,13 @@
   "chart.total": "总计 RM{{total}}",
   "chart.empty": "暂无数据",
   "month": "月份",
-  "year": "年份"
+  "year": "年份",
+  "select": "选择",
+  "select.cancel": "取消",
+  "select.all": "全选",
+  "select.deselect.all": "取消全选",
+  "select.count": "已选 {{count}} 项",
+  "select.delete": "删除 ({{count}})",
+  "select.confirm.title": "删除支出",
+  "select.confirm.description": "确定删除 {{count}} 条记录？此操作不可撤销。"
 }
