@@ -1,3 +1,6 @@
+
+<img width="300" alt="Screenrecorder-2026-05-17-20-09-26-79" src="https://github.com/user-attachments/assets/99713192-2a57-42e3-9a75-a36a60bb96c9" />
+
 # Expense Tracker
 
 A personal finance tracking app built with React Native and Expo. Track expenses and income, manage loans, and use an AI assistant to log transactions by text or photo.
