@@ -1,102 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import OpenAI from "npm:openai";
-
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: Deno.env.get("OPENROUTER_API_KEY")!,
-});
-
-const WRITE_TOOLS = ["addExpense", "deleteExpense"];
-
-const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: "function",
-    function: {
-      name: "addExpense",
-      description:
-        "Extract and return a complete expense or income record from the user's message. Fill every required field with normalized values.",
-      parameters: {
-        type: "object",
-        required: ["name", "amount", "category_id", "is_expense", "spend_date"],
-        additionalProperties: false,
-        properties: {
-          name: {
-            type: "string",
-            description:
-              'Extract a short transaction name from the user input. Use only the core label, not the full sentence. Do not include amount, currency, date, or filler words. Examples: "add coffee expense RM50" -> "coffee", "spent RM18 on grab ride" -> "grab ride", "salary came in" -> "salary". You MUST return a name this is REQUIRED!',
-          },
-          description: {
-            type: "string",
-            description:
-              "Optional extra note only if the user explicitly provides useful detail.",
-          },
-          amount: {
-            type: "number",
-            description: "Amount in MYR as a positive number only. Example: 16.5",
-          },
-          category_id: {
-            type: "integer",
-            description:
-              "Numeric category ID from the provided category list only. Must match the intended transaction type.",
-          },
-          is_expense: {
-            type: "boolean",
-            description:
-              "true for expense, false for income. Must match the selected category's is_expense value.",
-          },
-          spend_date: {
-            type: "string",
-            description:
-              'Transaction datetime in ISO 8601 format for the field "spend_date". Convert clearly understood user dates into ISO 8601 datetime. Examples: "2026-05-01" -> "2026-05-01T00:00:00", "2026-05-01 8pm" -> "2026-05-01T20:00:00". If the user does not provide a date, use the current datetime. If the user provides an ambiguous or unclear date format, such as "01-05-2026" where day/month order is uncertain, do not guess; ask for clarification instead.',
-          },
-        },
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "deleteExpense",
-      description: "Propose deleting an expense record by ID.",
-      parameters: {
-        type: "object",
-        required: ["id"],
-        additionalProperties: false,
-        properties: {
-          id: { type: "integer", description: "The expense ID to delete" },
-        },
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "listExpenses",
-      description: "List the user's expenses with optional filters.",
-      parameters: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          category: { type: "integer" },
-          from: { type: "string", description: "Start date in ISO format" },
-          to: { type: "string", description: "End date in ISO format" },
-          limit: { type: "integer", default: 10 },
-        },
-      },
-    },
-  },
-];
-
-function normalizeAddExpenseArgs(raw: Record<string, unknown>) {
-  return {
-    name: String(raw.name ?? raw.description ?? raw.title ?? ""),
-    amount: Number(raw.amount ?? 0),
-    category: Number(raw.category ?? raw.category_id ?? 0),
-    is_expense: raw.is_expense !== undefined ? Boolean(raw.is_expense) : true,
-    spend_date: String(raw.spend_date ?? raw.date ?? new Date().toISOString()),
-  };
-}
+import { TOOLS, promptMessage } from "./tools.ts";
+import { openai } from "./openai.ts";
+import { WRITE_TOOLS } from "./write-tools.ts";
+import { normalizeAddExpenseArgs } from "./utils.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*" };
 
@@ -137,7 +45,10 @@ Deno.serve(async (req: Request) => {
 
     if (catError) {
       console.error("Failed to fetch categories:", catError.message);
-      return Response.json({ error: "Failed to load categories" }, { status: 500 });
+      return Response.json(
+        { error: "Failed to load categories" },
+        { status: 500 },
+      );
     }
 
     const { messages: rawMessages } = await req.json();
@@ -168,34 +79,19 @@ Deno.serve(async (req: Request) => {
       };
     });
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: `You are a friendly expense tracking assistant for ${user.email}.
-Today is ${new Date().toLocaleDateString("en-MY", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
-Currency is MYR (Malaysian Ringgit).
-The user's available categories:
-${categoryText}
-
-Rules:
-- Always use the category ID (number) when calling tools, not the name.
-- Match the user's description to the closest category.
-- If unsure which category fits, ask for clarification.
-- For ADD or DELETE actions, call the tool immediately — do NOT write a reply message. The app will show a confirmation UI to the user.
-- For READ actions (list, summary), just answer directly.
-- Keep replies short and friendly.`,
-      },
-      ...history,
-    ];
+    const messages = promptMessage({
+      email: user.email,
+      categoryText,
+      history,
+    });
 
     let lastResponseText: string | null = null;
 
     for (let step = 0; step < 3; step++) {
       const response = await openai.chat.completions.create({
-        model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
         messages,
         tools: TOOLS,
-        tool_choice: "auto",
       });
 
       const msg = response.choices[0].message;
@@ -204,8 +100,12 @@ Rules:
 
       if (!msg.tool_calls || msg.tool_calls.length === 0) break;
 
-      const pendingWriteToolCalls: { toolName: string; args: Record<string, unknown> }[] = [];
-      const toolResults: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = [];
+      const pendingWriteToolCalls: {
+        toolName: string;
+        args: Record<string, unknown>;
+      }[] = [];
+      const toolResults: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] =
+        [];
 
       for (const tc of msg.tool_calls) {
         const args = JSON.parse(tc.function.arguments ?? "{}");
@@ -244,6 +144,18 @@ Rules:
           });
         }
       }
+
+      console.log(
+        "Full steps:",
+        JSON.stringify(
+          {
+            pendingWriteToolCalls,
+            messages,
+          },
+          null,
+          2,
+        ),
+      );
 
       if (pendingWriteToolCalls.length > 0) {
         return Response.json(
