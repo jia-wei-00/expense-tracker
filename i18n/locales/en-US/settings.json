@@ -2,5 +2,19 @@
   "title": "Settings",
   "language.label": "Language",
   "language.english": "English",
-  "language.chinese": "中文"
+  "language.chinese": "中文",
+  "whatsapp.label": "WhatsApp Bot",
+  "whatsapp.not_linked": "Not linked",
+  "whatsapp.hint": "Enter your number with country code, no + (e.g. 60123456789)",
+  "whatsapp.link": "Link",
+  "whatsapp.update": "Update",
+  "whatsapp.saving": "Saving...",
+  "whatsapp.unlink": "Unlink",
+  "whatsapp.unlinking": "Unlinking...",
+  "whatsapp.cancel": "Cancel",
+  "whatsapp.unlink.title": "Unlink WhatsApp",
+  "whatsapp.unlink.description": "You will no longer be able to use the WhatsApp bot. You can re-link at any time.",
+  "whatsapp.error.save": "Failed to save phone number. Please try again.",
+  "whatsapp.error.delete": "Failed to unlink. Please try again.",
+  "whatsapp.error.format": "Enter a valid number with country code, no + (e.g. 60123456789)"
 }

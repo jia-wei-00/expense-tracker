@@ -1,22 +1,24 @@
 import ChatBubble from "@/components/agent/ChatBubble";
 import ChatInput from "@/components/agent/ChatInput";
+import EmptyState from "@/components/agent/EmptyState";
 import PendingActionPanel from "@/components/agent/PendingActionPanel";
-import Container from "@/components/shared/Container";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { Button, ButtonIcon } from "@/components/ui/button";
+import { HStack } from "@/components/ui/hstack";
+import { Heading } from "@/components/ui/heading";
 import { useChat } from "@/hooks/useAgent";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCategory } from "@/hooks/useCategory";
 import { useErrorToast } from "@/hooks/useErrorToast";
 import { TDisplayMessage } from "@/types/hooks/use-agent";
 import { FlashList, FlashListRef } from "@shopify/flash-list";
+import { Trash2 } from "lucide-react-native";
 import React, { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-const MessageSeparator = () => <Box className="h-1" />;
+const MessageSeparator = () => <Box className="h-2" />;
 
 export default function AgentScreen() {
   const { t } = useTranslation("agent");
@@ -63,6 +65,10 @@ export default function AgentScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   }, [inputText, loading, pendingImageUrl, sendMessage]);
 
+  const handleSuggestion = useCallback((text: string) => {
+    setInputText(text);
+  }, []);
+
   const renderMessage = useCallback(
     ({ item }: { item: TDisplayMessage }) => (
       <ChatBubble
@@ -85,66 +91,60 @@ export default function AgentScreen() {
       className="flex-1"
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : bottom}
     >
-      <Container title={t("title")}>
-        {() => (
-          <Box className="flex-1">
+      <SafeAreaView edges={["top", "left", "right"]} className="flex-1">
+        <Box className="flex-1 px-3">
+          <HStack className="items-center justify-between my-5">
+            <Heading size="2xl">{t("title")}</Heading>
             {messages.length > 0 && (
-              <Box className="items-end pb-1">
-                <Button
-                  variant="link"
-                  size="sm"
-                  onPress={clearMessages}
-                  isDisabled={loading}
-                >
-                  <ButtonText className="text-typography-400">
-                    {t("clear")}
-                  </ButtonText>
-                </Button>
-              </Box>
+              <Button
+                variant="link"
+                size="sm"
+                onPress={clearMessages}
+                isDisabled={loading}
+              >
+                <ButtonIcon as={Trash2} className="text-typography-400" />
+              </Button>
             )}
-            {displayMessages.length === 0 ? (
-              <Box className="flex-1 items-center justify-center">
-                <Text className="text-typography-400 text-center text-sm leading-relaxed">
-                  {t("empty.state")}
-                </Text>
-              </Box>
-            ) : (
-              <FlashList
-                ref={listRef}
-                data={displayMessages}
-                renderItem={renderMessage}
-                keyExtractor={keyExtractor}
-                ItemSeparatorComponent={MessageSeparator}
-                contentContainerStyle={{ paddingBottom: 8 }}
-                onContentSizeChange={() =>
-                  listRef.current?.scrollToEnd({ animated: true })
-                }
-              />
-            )}
+          </HStack>
 
-            {pendingToolCall && (
-              <PendingActionPanel
-                pendingToolCalls={pendingToolCall}
-                categories={categories}
-                onConfirm={confirmAction}
-                onCancel={cancelAction}
-                onRemoveItem={removeItem}
-              />
-            )}
-
-            <ChatInput
-              value={inputText}
-              onChange={setInputText}
-              onSend={handleSend}
-              isDisabled={loading}
-              pendingImageUrl={pendingImageUrl}
-              isUploading={isUploading}
-              onPickImage={handlePickImage}
-              onRemoveImage={() => setPendingImageUrl(null)}
+          {displayMessages.length === 0 ? (
+            <EmptyState onSuggestion={handleSuggestion} />
+          ) : (
+            <FlashList
+              ref={listRef}
+              data={displayMessages}
+              renderItem={renderMessage}
+              keyExtractor={keyExtractor}
+              ItemSeparatorComponent={MessageSeparator}
+              contentContainerStyle={{ paddingBottom: 8 }}
+              onContentSizeChange={() =>
+                listRef.current?.scrollToEnd({ animated: true })
+              }
             />
-          </Box>
-        )}
-      </Container>
+          )}
+
+          {pendingToolCall && (
+            <PendingActionPanel
+              pendingToolCalls={pendingToolCall}
+              categories={categories}
+              onConfirm={confirmAction}
+              onCancel={cancelAction}
+              onRemoveItem={removeItem}
+            />
+          )}
+
+          <ChatInput
+            value={inputText}
+            onChange={setInputText}
+            onSend={handleSend}
+            isDisabled={loading}
+            pendingImageUrl={pendingImageUrl}
+            isUploading={isUploading}
+            onPickImage={handlePickImage}
+            onRemoveImage={() => setPendingImageUrl(null)}
+          />
+        </Box>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

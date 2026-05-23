@@ -22,44 +22,44 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        // tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarActiveTintColor: "#ffffff",
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: t("tab.home"),
-          tabBarIcon: ({ color }) => <Icon as={LayoutDashboard} />,
+          tabBarIcon: ({ color }) => <Icon as={LayoutDashboard} style={{ color }} />,
         }}
       />
       <Tabs.Screen
         name="loan"
         options={{
           title: t("tab.loan"),
-          tabBarIcon: ({ color }) => <Icon as={CreditCard} />,
+          tabBarIcon: ({ color }) => <Icon as={CreditCard} style={{ color }} />,
         }}
       />
       <Tabs.Screen
         name="agent"
         options={{
           title: t("tab.agent"),
-          tabBarIcon: ({ color }) => <Icon as={Bot} />,
+          tabBarIcon: ({ color }) => <Icon as={Bot} style={{ color }} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
           title: t("tab.explore"),
-          tabBarIcon: ({ color }) => <Icon as={History} />,
+          tabBarIcon: ({ color }) => <Icon as={History} style={{ color }} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: t("tab.settings"),
-          tabBarIcon: ({ color }) => <Icon as={Settings} />,
+          tabBarIcon: ({ color }) => <Icon as={Settings} style={{ color }} />,
         }}
       />
     </Tabs>

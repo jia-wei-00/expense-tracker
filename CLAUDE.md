@@ -27,28 +27,31 @@ React Native + Expo (v55 preview) app using file-based routing via Expo Router. 
 
 ### State Management — Two Layers
 
-1. **Zustand** (`store/`) — synchronous, auth-scoped only:
-   - `useAuthStore`: `signIn()`, `signOut()`, `initialize()` (reads Supabase session on boot, subscribes to auth changes)
+1. **Zustand** (`store/`) — synchronous, auth-scoped:
+   - `useAuthStore`: `signIn()`, `signOut()`, `signUp()`, `initialize()` (reads Supabase session on boot, subscribes to auth changes)
    - `useSessionStore`: holds the active `Session`; exposes `getUserId()` to hooks
+   - `store/useExpenses.ts` is legacy (MMKV-persisted Zustand) — superseded by TanStack Query hooks; do not extend it
 
 2. **TanStack Query** (`hooks/`) — all server data, caching, and optimistic updates:
    - Query keys are constants in `constants/query-key.ts`
-   - Monthly queries use `"YYYY-MM"` string format directly as part of the key
+   - Monthly chart queries use a bare `"YYYY-MM"` string as the query key (not wrapped in `QUERY_KEY`)
+   - Global `staleTime` defaults to 5 minutes (set on the `QueryClient` in `app/_layout.tsx`)
 
-**Real-time sync:** `useExpenseSubscription()` and `useCategorySubscription()` (initialized in `app/(tabs)/_layout.tsx`) subscribe to Supabase Realtime `postgres_changes` events and update the TanStack Query cache directly via `queryClient.setQueryData()` — no refetch, immediate UI.
+**Real-time sync:** `useExpenseSubscription()` and `useCategorySubscription()` (initialized in `app/(tabs)/_layout.tsx`) subscribe to Supabase Realtime `postgres_changes` events and update the TanStack Query cache directly via `queryClient.setQueryData()` — no refetch, immediate UI. Only expenses and categories have real-time subscriptions; loans do not.
 
 ### Routing
 
 - `app/_layout.tsx` — root Stack with `Stack.Protected` guards; unauthenticated → `login`, authenticated → `(tabs)`
-- `app/(tabs)/` — 5 tabs (home, loan, agent, explore, settings); subscriptions initialized here
+- `app/(tabs)/` — 5 tabs: home (dashboard), loan, agent (AI chat), explore (transaction history), settings; subscriptions initialized here
 - Nested routes: `expense/add`, `expense/expense-details/[id]`, `expense/expense-details/update`, `loan/[id]`
 - Nested `_layout.tsx` files require `headerShown: false` on the parent Stack screen to prevent double headers
 
 ### Backend
 
-- **Supabase** — PostgreSQL database, Auth, Realtime subscriptions
-- **Supabase Edge Function** (`supabase/functions/ai-chat/`) — Deno runtime, calls Gemini API (`@ai-sdk/google`) for the AI agent tab; returns pending tool calls for client-side approval before mutations execute
-- AI agent hook: `hooks/useAgent.ts` — manages chat state and invokes the edge function
+- **Supabase** — PostgreSQL database, Auth, Realtime subscriptions, Storage (`chat-images` bucket for agent images)
+- **Supabase Edge Function** (`supabase/functions/ai-chat/`) — Deno runtime; calls **OpenRouter** (`https://openrouter.ai/api/v1`) with the `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` model via an OpenAI-compatible client. Write operations (addExpense, deleteExpense) are returned as `pendingToolCalls` for client-side confirmation before mutations execute.
+- AI agent hook: `hooks/useAgent.ts` exports `useChat()` — manages chat state, image attachment, and invokes the edge function
+- Image upload: `hooks/useImageUpload.ts` — picks from device gallery, compresses to JPEG ≤ 8 MB, uploads to Supabase Storage, returns public URL for the AI message
 
 ### Forms
 
@@ -62,12 +65,11 @@ React Native + Expo (v55 preview) app using file-based routing via Expo Router. 
 
 ### i18n
 
-English (`en-US`) and Chinese (`zh-CN`) via `react-i18next`. Always call `useTranslation("namespace")` with a namespace — never without. Language preference is persisted in MMKV under the key `"language"`. Locale files are in `i18n/locales/`. All user-facing strings use `useTranslation("namespace")` from `react-i18next`. Locale files are in `i18n/locales/en-US/` and `i18n/locales/zh-CN/`. The active language is persisted in MMKV under the key `"language"`. Translations are **dynamically loaded per namespace** — always pass the namespace explicitly to `useTranslation` (e.g. `useTranslation("home")`, `useTranslation("auth")`). Never call `useTranslation()` without a namespace; doing so falls back to a default bundle and the correct strings will not load.
+English (`en-US`) and Chinese (`zh-CN`) via `react-i18next`. Locale files are in `i18n/locales/`. Translations are **dynamically loaded per namespace** — always pass the namespace explicitly to `useTranslation` (e.g. `useTranslation("home")`, `useTranslation("auth")`). Never call `useTranslation()` without a namespace; doing so falls back to a default bundle and the correct strings will not load. Language preference is persisted in MMKV under the key `"language"`.
 
 ### Storage
 
 React Native MMKV (`lib/storage.ts`) used as the Supabase auth storage adapter and for persisting user preferences. Encryption key comes from `EXPO_PUBLIC_MMKV_ENCRYPTION_KEY`.
-**Real-time sync**: `useExpenseSubscription` and `useCategorySubscription` are called in `(tabs)/_layout.tsx`. They subscribe to Supabase Realtime `postgres_changes` and directly update TanStack Query's in-memory cache (via `queryClient.setQueryData`) rather than triggering a refetch.
 
 **Supabase tables**: `expense` (tracks both expenses and incomes via `is_expense: boolean`), `expense_category` (per-user categories, also typed via `is_expense`), `loan` (user-owned loan names), and `loan_record` (individual payment records for each loan). All queries filter by `user_id` from the session.
 
@@ -76,7 +78,7 @@ React Native MMKV (`lib/storage.ts`) used as the Supabase auth storage adapter a
 - Component prop interfaces: `types/components/<folder>/<component-kebab>.d.ts` — never inline in the component file
 - Store interfaces: `types/store/`
 - Hook return types: `types/hooks/`
-- Database types: `types/database.types.ts` (auto-generated by Supabase CLI)
+- Database types: `database.types.ts` at the project root (auto-generated by Supabase CLI, imported as `@/database.types`); a copy also exists at `types/database.types.ts`
 
 ## Key Conventions
 
@@ -85,10 +87,11 @@ React Native MMKV (`lib/storage.ts`) used as the Supabase auth storage adapter a
 - **Supabase `.delete()` without `.select()`** returns `null` — pass deleted row fields as mutation input and read them in `onSuccess(_, variables)`
 - **FlashList separators** must be defined outside the component function; inline definitions cause FlashList to skip rendering them
 - **All user-facing strings** go through i18next
+- **Error toasts** in mutation `onError` handlers use `useErrorToast()` from `hooks/useErrorToast.ts`
 - **Component file structure**: Components are organized under `components/` by scope:
-- `components/shared/` — reusable components used across multiple pages (e.g. `Container`, `ControlledInput`, `TransactionItem`)
-- `components/ui/` — Gluestack UI primitives
-- `components/<page-name>/` — components scoped to a specific page; if a page screen has multiple distinct sections, extract each section into its own component file and place it here (e.g. `components/home/chart.tsx`, `components/home/legend.tsx`, `components/expense-details/input-form.tsx`, `components/login/LoginForm.tsx`)
+  - `components/shared/` — reusable components used across multiple pages (e.g. `Container`, `ControlledInput`, `TransactionItem`)
+  - `components/ui/` — Gluestack UI primitives
+  - `components/<page-name>/` — components scoped to a specific page; if a page screen has multiple distinct sections, extract each section into its own component file and place it here
 
 ## Environment Variables
 
@@ -96,5 +99,5 @@ React Native MMKV (`lib/storage.ts`) used as the Supabase auth storage adapter a
 EXPO_PUBLIC_SUPABASE_URL
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 EXPO_PUBLIC_MMKV_ENCRYPTION_KEY
-GEMINI_API_KEY                        # Server-side, set in Supabase edge function secrets
+OPENROUTER_API_KEY                    # Server-side, set in Supabase edge function secrets
 ```

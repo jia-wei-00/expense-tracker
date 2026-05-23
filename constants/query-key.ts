@@ -4,4 +4,5 @@ export const QUERY_KEY = {
   CATEGORIES: "categories",
   LOANS: "loans",
   LOAN_RECORDS: "loan_records",
+  WHATSAPP_USER: "whatsapp_user",
 };

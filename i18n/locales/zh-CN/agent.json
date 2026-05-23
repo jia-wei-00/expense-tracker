@@ -9,6 +9,8 @@
   "submitted": "支出已成功保存！",
   "error": "出现错误，请重试。",
   "empty.state": "您好！我可以帮您记录支出或回答关于消费的问题。\n\n试试说：\n• \"午饭 RM15，咖啡 RM8\"\n• \"我这个月花了多少？\"\n• \"这周在餐饮上花了多少？\"",
+  "empty.hint": "询问您的消费情况，或告诉我您买了什么。",
+  "empty.try": "试试说",
   "category.new": "新建",
   "thinking": "思考中...",
   "suggestions.saved": "✓ 支出已成功记录",

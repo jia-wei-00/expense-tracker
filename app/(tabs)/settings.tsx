@@ -6,6 +6,7 @@ import ActionSheet from "@/components/shared/ActionSheet";
 import { useErrorToast } from "@/hooks/useErrorToast";
 import Container from "@/components/shared/Container";
 import LanguageSwitcher from "@/components/settings/LanguageSwitcher";
+import WhatsAppRegistration from "@/components/settings/WhatsAppRegistration";
 import { VStack } from "@/components/ui/vstack";
 
 const Settings = () => {
@@ -30,12 +31,13 @@ const Settings = () => {
       <Container title={t("title")}>
         <VStack space="md" className="flex-1">
           <LanguageSwitcher />
+          <WhatsAppRegistration />
         </VStack>
         <Button
           variant="solid"
           size="md"
           action="primary"
-          className="rounded-full mb-4"
+          className="rounded-full mb-4 mt-4"
           onPress={() => setIsOpened(true)}
         >
           <ButtonText>{tAuth("logout")}</ButtonText>

@@ -2,5 +2,19 @@
   "title": "设置",
   "language.label": "语言",
   "language.english": "English",
-  "language.chinese": "中文"
+  "language.chinese": "中文",
+  "whatsapp.label": "WhatsApp 机器人",
+  "whatsapp.not_linked": "未绑定",
+  "whatsapp.hint": "请输入含国家代码的号码，无需 +（例如 60123456789）",
+  "whatsapp.link": "绑定",
+  "whatsapp.update": "更新",
+  "whatsapp.saving": "保存中...",
+  "whatsapp.unlink": "解绑",
+  "whatsapp.unlinking": "解绑中...",
+  "whatsapp.cancel": "取消",
+  "whatsapp.unlink.title": "解绑 WhatsApp",
+  "whatsapp.unlink.description": "解绑后将无法使用 WhatsApp 机器人，您可以随时重新绑定。",
+  "whatsapp.error.save": "保存手机号码失败，请重试。",
+  "whatsapp.error.delete": "解绑失败，请重试。",
+  "whatsapp.error.format": "请输入有效的含国家代码号码，无需 +（例如 60123456789）"
 }

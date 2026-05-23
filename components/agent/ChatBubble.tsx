@@ -1,35 +1,39 @@
 import React from "react";
-import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { useColorScheme } from "react-native";
 import { Image } from "expo-image";
 import Markdown from "react-native-markdown-display";
+import { Box } from "@/components/ui/box";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { IChatBubble } from "@/types/components/agent/chat-bubble";
+import { cn } from "@/lib/utils";
+import BotAvatar from "@/components/agent/BotAvatar";
+import TypingDots from "@/components/agent/TypingDots";
 
 const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
   const isUser = role === "user";
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  // Theme colors sourced from gluestack-ui-provider/config.ts
-  const userBg = isDark ? "rgb(230,230,230)" : "rgb(51,51,51)";
-  const userText = isDark ? "rgb(23,23,23)" : "rgb(254,254,255)";
-  const assistantBg = isDark ? "rgb(65,64,64)" : "rgb(242,241,241)";
-  const assistantText = isDark ? "rgb(254,254,255)" : "rgb(38,38,39)";
+  // Kept for react-native-markdown-display which requires a plain style object
+  const textColor = isUser
+    ? isDark ? "rgb(23,23,23)" : "rgb(254,254,255)"
+    : isDark ? "rgb(254,254,255)" : "rgb(38,38,39)";
   const codeBlockBg = isDark ? "rgb(39,38,37)" : "rgb(220,219,219)";
 
-  const textColor = isUser ? userText : assistantText;
+  const bubbleClassName = cn(
+    "rounded-[18px] px-3.5 py-2.5 max-w-[75%]",
+    isUser
+      ? "rounded-br-[4px] bg-[rgb(51,51,51)] dark:bg-[rgb(230,230,230)]"
+      : "rounded-bl-[4px] bg-[rgb(242,241,241)] dark:bg-[rgb(55,54,54)]"
+  );
 
-  const bubbleStyle = {
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 8,
-    backgroundColor: isUser ? userBg : assistantBg,
-    ...(isUser
-      ? { borderBottomRightRadius: 4 }
-      : { borderBottomLeftRadius: 4 }),
-  };
+  const rowClassName = cn(
+    "flex-row items-start",
+    isUser ? "justify-end" : "justify-start"
+  );
+
+  const userTextClassName = "text-[rgb(254,254,255)] dark:text-[rgb(23,23,23)] text-sm leading-[22px]";
 
   const markdownStyles = {
     body: { color: textColor, fontSize: 14, lineHeight: 22 },
@@ -44,19 +48,8 @@ const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
       fontFamily: "monospace",
       fontSize: 13,
     },
-    fence: {
-      backgroundColor: codeBlockBg,
-      borderRadius: 8,
-      padding: 10,
-      marginVertical: 4,
-    },
-    code_block: {
-      backgroundColor: codeBlockBg,
-      borderRadius: 8,
-      padding: 10,
-      fontFamily: "monospace",
-      fontSize: 13,
-    },
+    fence: { backgroundColor: codeBlockBg, borderRadius: 8, padding: 10, marginVertical: 4 },
+    code_block: { backgroundColor: codeBlockBg, borderRadius: 8, padding: 10, fontFamily: "monospace", fontSize: 13 },
     bullet_list: { marginVertical: 2 },
     ordered_list: { marginVertical: 2 },
     list_item: { marginVertical: 1 },
@@ -71,43 +64,34 @@ const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
 
   if (isLoading) {
     return (
-      <View style={{ flexDirection: "row", justifyContent: "flex-start" }}>
-        <View style={[bubbleStyle, { maxWidth: "80%" }]}>
-          <ActivityIndicator size="small" />
-        </View>
-      </View>
+      <Box className="flex-row items-start">
+        <BotAvatar />
+        <Box className={bubbleClassName}>
+          <TypingDots />
+        </Box>
+      </Box>
     );
   }
 
   if (typeof content === "string") {
     return (
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: isUser ? "flex-end" : "flex-start",
-        }}
-      >
-        <View style={[bubbleStyle, { maxWidth: "80%" }]}>
+      <Box className={rowClassName}>
+        {!isUser && <BotAvatar />}
+        <Box className={bubbleClassName}>
           {isUser ? (
-            <Text style={{ color: textColor, fontSize: 14, lineHeight: 22 }}>
-              {content}
-            </Text>
+            <Text className={userTextClassName}>{content}</Text>
           ) : (
             <Markdown style={markdownStyles}>{content}</Markdown>
           )}
-        </View>
-      </View>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: isUser ? "flex-end" : "flex-start",
-      }}
-    >
-      <View style={[bubbleStyle, { maxWidth: "80%" }]}>
+    <Box className={rowClassName}>
+      {!isUser && <BotAvatar />}
+      <Box className={bubbleClassName}>
         <VStack space="xs">
           {content.map((part, i) => {
             if (part.type === "image") {
@@ -122,23 +106,16 @@ const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
             }
             if (part.type === "text" && part.text) {
               return isUser ? (
-                <Text
-                  key={i}
-                  style={{ color: textColor, fontSize: 14, lineHeight: 22 }}
-                >
-                  {part.text}
-                </Text>
+                <Text key={i} className={userTextClassName}>{part.text}</Text>
               ) : (
-                <Markdown key={i} style={markdownStyles}>
-                  {part.text}
-                </Markdown>
+                <Markdown key={i} style={markdownStyles}>{part.text}</Markdown>
               );
             }
             return null;
           })}
         </VStack>
-      </View>
-    </View>
+      </Box>
+    </Box>
   );
 };
 

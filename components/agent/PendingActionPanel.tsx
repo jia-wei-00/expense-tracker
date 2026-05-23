@@ -4,12 +4,13 @@ import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
 import { Divider } from "@/components/ui/divider";
+import { Icon } from "@/components/ui/icon";
 import { IPendingActionPanel } from "@/types/components/agent/pending-action-panel";
 import type { TPendingToolCall } from "@/types/hooks/use-agent";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import TransactionItem from "@/components/shared/TransactionItem";
-import { X } from "lucide-react-native";
+import { X, CircleAlert } from "lucide-react-native";
 
 const ExpenseSeparator = () => <Divider className="my-1" />;
 
@@ -51,10 +52,13 @@ const PendingActionPanel = ({
   );
 
   return (
-    <Box className="border border-outline-200 rounded-xl p-3 mb-2 bg-background-100">
-      <Text className="text-xs text-typography-500 mb-3">
-        {t("pending.title")}
-      </Text>
+    <Box className="border border-outline-200 rounded-2xl p-3 mb-2 bg-background-100">
+      <HStack className="items-center mb-3" space="xs">
+        <Icon as={CircleAlert} size="xs" className="text-typography-500" />
+        <Text className="text-xs text-typography-500 font-medium flex-1">
+          {t("pending.title")}
+        </Text>
+      </HStack>
 
       {previewExpenses.length > 0 && (
         <VStack className="bg-background-0 rounded-2xl border border-outline-50 px-3 py-2 mb-3">

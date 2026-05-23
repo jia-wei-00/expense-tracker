@@ -12,7 +12,9 @@
       "Bash(npm list *)",
       "Bash(findstr -i \"scheme\\\\|expo\\\\|build\\\\|android\")",
       "WebFetch(domain:docs.expo.dev)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "mcp__supabase__list_tables"
     ]
   },
   "enableAllProjectMcpServers": true,

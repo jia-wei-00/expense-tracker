@@ -4,11 +4,12 @@ import { Image } from "expo-image";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText, ButtonIcon } from "@/components/ui/button";
+import { Button, ButtonIcon } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { IChatInput } from "@/types/components/agent/chat-input";
-import { ImagePlus, X } from "lucide-react-native";
+import { ImagePlus, X, ArrowUp } from "lucide-react-native";
+import { cn } from "@/lib/utils";
 
 const ChatInput = ({
   value,
@@ -21,6 +22,7 @@ const ChatInput = ({
   onRemoveImage,
 }: IChatInput) => {
   const { t } = useTranslation("agent");
+  const canSend = !isDisabled && !isUploading && !!(value.trim() || pendingImageUrl);
 
   return (
     <VStack className="border-t border-outline-100 pt-2 pb-1">
@@ -59,7 +61,8 @@ const ChatInput = ({
         >
           <ButtonIcon as={ImagePlus} className="text-typography-500" />
         </Button>
-        <Input variant="outline" size="md" className="flex-1">
+
+        <Input variant="outline" size="md" className="flex-1 rounded-2xl">
           <InputField
             placeholder={t("placeholder")}
             value={value}
@@ -67,18 +70,35 @@ const ChatInput = ({
             multiline
             maxLength={500}
             returnKeyType="send"
+            onSubmitEditing={onSend}
           />
         </Input>
-        <Button
-          size="md"
-          onPress={onSend}
-          disabled={
-            isDisabled || isUploading || (!value.trim() && !pendingImageUrl)
-          }
-          className="self-end"
+
+        <Box
+          className={cn(
+            "w-10 h-10 rounded-full items-center justify-center",
+            canSend
+              ? "bg-[rgb(40,40,40)] dark:bg-[rgb(230,230,230)]"
+              : "bg-[rgb(220,219,219)] dark:bg-[rgb(55,54,54)]"
+          )}
         >
-          <ButtonText>{t("send")}</ButtonText>
-        </Button>
+          <Button
+            variant="link"
+            size="md"
+            onPress={onSend}
+            isDisabled={!canSend}
+            className="w-10 h-10 rounded-full p-0"
+          >
+            <ButtonIcon
+              as={ArrowUp}
+              className={cn(
+                canSend
+                  ? "text-[rgb(240,240,240)] dark:text-[rgb(20,20,20)]"
+                  : "text-[rgb(150,150,150)] dark:text-[rgb(100,100,100)]"
+              )}
+            />
+          </Button>
+        </Box>
       </HStack>
     </VStack>
   );

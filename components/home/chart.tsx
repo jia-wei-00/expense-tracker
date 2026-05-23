@@ -1,5 +1,6 @@
 import { useFetchMonthlyExpenses } from "@/hooks/useExpenses";
 import { useMemo } from "react";
+import { useColorScheme } from "react-native";
 import { Text } from "@/components/ui/text";
 import { PieChart } from "react-native-gifted-charts";
 import Legend from "@/components/home/legend";
@@ -12,6 +13,9 @@ import { useTranslation } from "react-i18next";
 const Chart = ({ type, month }: IChart) => {
   const { data } = useFetchMonthlyExpenses(month);
   const { t } = useTranslation("home");
+  const colorScheme = useColorScheme();
+  // PieChart fakes the donut hole with a solid filled circle — must match the card's bg-background-0
+  const innerCircleColor = colorScheme === "dark" ? "rgb(18, 18, 18)" : "rgb(255, 255, 255)";
 
   const { pieData, total } = useMemo(() => {
     if (!data?.[type]) return { pieData: [], total: 0 };
@@ -87,6 +91,7 @@ const Chart = ({ type, month }: IChart) => {
             sectionAutoFocus
             radius={90}
             innerRadius={60}
+            innerCircleColor={innerCircleColor}
             centerLabelComponent={() => {
               const maxItem = pieData[0];
               const percentage =
