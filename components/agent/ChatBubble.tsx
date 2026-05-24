@@ -94,11 +94,11 @@ const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
       <Box className={bubbleClassName}>
         <VStack space="xs">
           {content.map((part, i) => {
-            if (part.type === "image") {
+            if (part.type === "image_url") {
               return (
                 <Image
                   key={i}
-                  source={{ uri: part.url }}
+                  source={{ uri: part.image_url.url }}
                   style={{ width: 200, height: 150, borderRadius: 8 }}
                   contentFit="cover"
                 />

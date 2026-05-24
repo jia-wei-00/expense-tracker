@@ -1,6 +1,6 @@
 export type TMessageContentPart =
   | { type: "text"; text: string }
-  | { type: "image"; url: string };
+  | { type: "image_url"; image_url: { url: string } };
 
 export type TMessage = {
   role: "user" | "assistant";

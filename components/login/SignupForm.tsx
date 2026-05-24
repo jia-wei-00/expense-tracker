@@ -5,7 +5,6 @@ import { signupSchema, TSignupSchema } from "@/types/page/signup-schema";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/useAuth";
-import { Icon } from "@/components/ui/icon";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useErrorToast } from "@/hooks/useErrorToast";

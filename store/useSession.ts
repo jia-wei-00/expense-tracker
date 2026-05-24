@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 import { create } from "zustand";
 import type { ISessionStore } from "@/types/store/useSession";
 
@@ -19,7 +19,14 @@ export const useSessionStore = create<ISessionStore>((set, get) => ({
       if (error) throw error;
       get().setSession(data.session);
     } catch (error) {
-      if (error instanceof AuthError) {
+      if (
+        error instanceof AuthApiError &&
+        error.message.includes("Refresh Token Not Found")
+      ) {
+        await supabase.auth.signOut();
+        set({ session: null });
+        return;
+      } else if (error instanceof AuthError) {
         // TODO: show auth error toast
       } else {
         // TODO: show server error toast

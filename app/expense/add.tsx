@@ -35,10 +35,11 @@ const AddExpense = () => {
   };
 
   const isExpenseWatch = methods.watch("is_expense");
+  const { resetField } = methods;
 
   useEffect(() => {
-    methods.resetField("category");
-  }, [isExpenseWatch]);
+    resetField("category");
+  }, [isExpenseWatch, resetField]);
 
   return (
     <Container>

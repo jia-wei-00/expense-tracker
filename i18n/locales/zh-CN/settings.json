@@ -14,7 +14,14 @@
   "whatsapp.cancel": "取消",
   "whatsapp.unlink.title": "解绑 WhatsApp",
   "whatsapp.unlink.description": "解绑后将无法使用 WhatsApp 机器人，您可以随时重新绑定。",
+  "whatsapp.verified": "已验证",
+  "whatsapp.not_verified": "未验证",
+  "whatsapp.resend_verification": "重新发送",
+  "whatsapp.resending": "发送中...",
+  "whatsapp.verification_sent": "验证消息已发送",
   "whatsapp.error.save": "保存手机号码失败，请重试。",
   "whatsapp.error.delete": "解绑失败，请重试。",
+  "whatsapp.error.resend": "重新发送验证失败，请重试。",
+  "whatsapp.error.no_number": "未保存号码，请先添加手机号码。",
   "whatsapp.error.format": "请输入有效的含国家代码号码，无需 +（例如 60123456789）"
 }

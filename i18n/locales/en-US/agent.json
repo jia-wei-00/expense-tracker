@@ -18,5 +18,6 @@
   "confirm": "Confirm",
   "cancel": "Cancel",
   "pending.title": "AI wants to save this. Confirm?",
-  "pending.delete": "Delete this expense?"
+  "pending.delete": "Delete this expense?",
+  "ocr.prompt": "Please scan this receipt and extract all expense details including merchant name, items, amounts, and total."
 }

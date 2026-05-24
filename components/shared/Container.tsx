@@ -22,9 +22,10 @@ type ContainerProps = {
   children: React.ReactNode | ((props: RenderProps) => React.ReactNode);
   className?: string;
   title?: string;
+  refreshControl?: React.ReactElement;
 };
 
-const Container = ({ children, className, title }: ContainerProps) => {
+const Container = ({ children, className, title, refreshControl }: ContainerProps) => {
   const { scrollHandler, animatedHeaderStyle } = useFadeHeader();
 
   const header = title ? (
@@ -52,6 +53,7 @@ const Container = ({ children, className, title }: ContainerProps) => {
             onScroll={!!title ? scrollHandler : undefined}
             contentContainerStyle={{ paddingBottom: 12 }}
             scrollEventThrottle={16}
+            refreshControl={refreshControl}
           >
             {header}
             {children}

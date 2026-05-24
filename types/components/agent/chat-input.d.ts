@@ -7,4 +7,5 @@ export interface IChatInput {
   isUploading: boolean;
   onPickImage: () => void;
   onRemoveImage: () => void;
+  onScanReceipt: () => void;
 }

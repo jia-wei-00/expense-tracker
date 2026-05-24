@@ -1,4 +1,5 @@
 import React from "react";
+import { RefreshControl } from "react-native";
 import { ButtonText, Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuth";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,7 @@ import Container from "@/components/shared/Container";
 import LanguageSwitcher from "@/components/settings/LanguageSwitcher";
 import WhatsAppRegistration from "@/components/settings/WhatsAppRegistration";
 import { VStack } from "@/components/ui/vstack";
+import { useWhatsAppUser } from "@/hooks/useWhatsApp";
 
 const Settings = () => {
   const [isOpened, setIsOpened] = React.useState(false);
@@ -17,6 +19,7 @@ const Settings = () => {
   const { t: tAuth } = useTranslation("auth");
   const { t } = useTranslation("settings");
   const { showError } = useErrorToast();
+  const { refetch, isFetching } = useWhatsAppUser();
 
   const handleLogout = async () => {
     try {
@@ -28,7 +31,12 @@ const Settings = () => {
 
   return (
     <>
-      <Container title={t("title")}>
+      <Container
+        title={t("title")}
+        refreshControl={
+          <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+        }
+      >
         <VStack space="md" className="flex-1">
           <LanguageSwitcher />
           <WhatsAppRegistration />

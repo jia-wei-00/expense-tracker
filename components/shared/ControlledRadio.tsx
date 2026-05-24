@@ -19,10 +19,7 @@ import {
   RadioIndicator,
   RadioLabel,
 } from "@/components/ui/radio";
-import {
-  IControlledRadio,
-  TValueType,
-} from "@/types/components/shared/controlled-radio";
+import { IControlledRadio } from "@/types/components/shared/controlled-radio";
 
 /**
  * Please wrap this component with FormProvider. It uses useFormContext to get form methods

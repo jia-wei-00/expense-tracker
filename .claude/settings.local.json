@@ -14,7 +14,10 @@
       "WebFetch(domain:docs.expo.dev)",
       "Bash(npm install *)",
       "Bash(npx tsc *)",
-      "mcp__supabase__list_tables"
+      "mcp__supabase__list_tables",
+      "Bash(npm run *)",
+      "Bash(grep -v \"components\\\\\\\\ui\\\\\\\\\")",
+      "Bash(Select-String -NotMatch \"components/ui/\")"
     ]
   },
   "enableAllProjectMcpServers": true,

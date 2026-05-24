@@ -1,7 +1,7 @@
 import React from "react";
 import type { IExpense } from "@/types/store/useExpenses";
 import { Text } from "@/components/ui/text";
-import { Pressable, View } from "react-native";
+import { Pressable } from "react-native";
 import { CATEGORY_ICON_MAP } from "@/constants/icon-map";
 import { Icon } from "@/components/ui/icon";
 import { safeParseAny } from "@/utils/zod-utils";

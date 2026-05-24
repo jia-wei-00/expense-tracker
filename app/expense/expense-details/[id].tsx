@@ -21,13 +21,13 @@ const ExpenseDetails = () => {
     id: string;
   }>();
 
-  if (!id) return null;
-
   const { t } = useTranslation("common");
   const [isOpened, setIsOpened] = useState(false);
   const expense = useExpenseById(Number(id));
   const { mutateAsync: deleteExpense, isPending: isDeleting } =
     useDeleteExpense();
+
+  if (!id) return null;
 
   const date = dayjs(expense?.spend_date).format("dddd • YYYY-MM-DD");
 

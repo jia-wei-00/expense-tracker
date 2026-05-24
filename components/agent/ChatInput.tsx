@@ -8,7 +8,7 @@ import { Button, ButtonIcon } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { IChatInput } from "@/types/components/agent/chat-input";
-import { ImagePlus, X, ArrowUp } from "lucide-react-native";
+import { ImagePlus, ScanLine, X, ArrowUp } from "lucide-react-native";
 import { cn } from "@/lib/utils";
 
 const ChatInput = ({
@@ -20,6 +20,7 @@ const ChatInput = ({
   isUploading,
   onPickImage,
   onRemoveImage,
+  onScanReceipt,
 }: IChatInput) => {
   const { t } = useTranslation("agent");
   const canSend = !isDisabled && !isUploading && !!(value.trim() || pendingImageUrl);
@@ -60,6 +61,15 @@ const ChatInput = ({
           isDisabled={isDisabled || isUploading}
         >
           <ButtonIcon as={ImagePlus} className="text-typography-500" />
+        </Button>
+
+        <Button
+          variant="link"
+          size="md"
+          onPress={onScanReceipt}
+          isDisabled={isDisabled || isUploading}
+        >
+          <ButtonIcon as={ScanLine} className="text-typography-500" />
         </Button>
 
         <Input variant="outline" size="md" className="flex-1 rounded-2xl">

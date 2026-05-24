@@ -2,11 +2,7 @@ import ExpenseForm from "@/components/expense-details/input-form";
 import Container from "@/components/shared/Container";
 import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { useGetCategoryIdByName } from "@/hooks/useCategory";
-import {
-  useAddExpense,
-  useExpenseById,
-  useUpdateExpense,
-} from "@/hooks/useExpenses";
+import { useExpenseById, useUpdateExpense } from "@/hooks/useExpenses";
 import {
   createAddExpenseSchema,
   type TAddExpenseInput,
@@ -23,8 +19,6 @@ const UpdateExpense = () => {
   const { id } = useLocalSearchParams<{
     id: string;
   }>();
-
-  if (!id) return null;
 
   const expense = useExpenseById(Number(id));
   const { t } = useTranslation("details");
@@ -45,14 +39,8 @@ const UpdateExpense = () => {
     },
   });
 
-  const onSubmit = (data: TAddExpenseOutput) => {
-    updateExpense({
-      ...data,
-      id: Number(id),
-    }).then(() => router.back());
-  };
-
   const isExpenseWatch = methods.watch("is_expense");
+  const { setValue } = methods;
 
   const isFirstRender = useRef(true);
 
@@ -61,8 +49,14 @@ const UpdateExpense = () => {
       isFirstRender.current = false;
       return;
     }
-    methods.setValue("category", 0);
-  }, [isExpenseWatch]);
+    setValue("category", 0);
+  }, [isExpenseWatch, setValue]);
+
+  if (!id) return null;
+
+  const onSubmit = (data: TAddExpenseOutput) => {
+    updateExpense({ ...data, id: Number(id) }).then(() => router.back());
+  };
 
   return (
     <Container>

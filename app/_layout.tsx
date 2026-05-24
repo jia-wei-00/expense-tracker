@@ -37,7 +37,7 @@ export default function RootLayout() {
 
   React.useEffect(() => {
     initialize();
-  }, []);
+  }, [initialize]);
 
   return (
     <GluestackUIProvider mode="dark">

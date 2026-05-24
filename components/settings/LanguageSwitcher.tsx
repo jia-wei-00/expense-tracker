@@ -5,7 +5,7 @@ import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
-import { Icon } from "@/components/ui/icon";
+import { Icon, CircleIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/ui/icon";
 import { Divider } from "@/components/ui/divider";
 import {
   Radio,
@@ -14,7 +14,6 @@ import {
   RadioIndicator,
   RadioLabel,
 } from "@/components/ui/radio";
-import { CircleIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/ui/icon";
 import storage from "@/lib/storage";
 
 const LANGUAGES = [

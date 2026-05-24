@@ -50,8 +50,19 @@ export default function AgentScreen() {
     try {
       const url = await pickAndUpload();
       if (url) setPendingImageUrl(url);
-    } catch (err: any) {
-      showError(err?.message ?? t("error"));
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : t("error"));
+    }
+  };
+
+  const handleScanReceipt = async () => {
+    try {
+      const url = await pickAndUpload("camera");
+      if (!url) return;
+      await sendMessage(t("ocr.prompt"), url);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : t("error"));
     }
   };
 
@@ -142,6 +153,7 @@ export default function AgentScreen() {
             isUploading={isUploading}
             onPickImage={handlePickImage}
             onRemoveImage={() => setPendingImageUrl(null)}
+            onScanReceipt={handleScanReceipt}
           />
         </Box>
       </SafeAreaView>

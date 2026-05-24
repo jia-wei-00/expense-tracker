@@ -29,8 +29,6 @@ const Separator = () => <Divider className="my-2" />;
 const LoanDetail = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  if (!id) return null;
-
   const loanId = Number(id);
   const { t } = useTranslation("loan");
   const { t: tCommon } = useTranslation("common");
@@ -40,12 +38,6 @@ const LoanDetail = () => {
     useDeleteLoanRecord();
   const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
   const [recordModalOpen, setRecordModalOpen] = useState(false);
-
-  const handleConfirmDelete = async () => {
-    if (!selectedRecordId) return;
-    await deleteRecord({ id: selectedRecordId, loanId });
-    setSelectedRecordId(null);
-  };
 
   const renderItem = useCallback(
     ({ item }: { item: TLoanRecord }) => (
@@ -75,6 +67,14 @@ const LoanDetail = () => {
     ),
     [tCommon, t],
   );
+
+  if (!id) return null;
+
+  const handleConfirmDelete = async () => {
+    if (!selectedRecordId) return;
+    await deleteRecord({ id: selectedRecordId, loanId });
+    setSelectedRecordId(null);
+  };
 
   const ListHeader = (
     <Box className="mb-4">

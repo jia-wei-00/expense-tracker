@@ -14,7 +14,14 @@
   "whatsapp.cancel": "Cancel",
   "whatsapp.unlink.title": "Unlink WhatsApp",
   "whatsapp.unlink.description": "You will no longer be able to use the WhatsApp bot. You can re-link at any time.",
+  "whatsapp.verified": "Verified",
+  "whatsapp.not_verified": "Not verified",
+  "whatsapp.resend_verification": "Resend",
+  "whatsapp.resending": "Sending...",
+  "whatsapp.verification_sent": "Verification message sent",
   "whatsapp.error.save": "Failed to save phone number. Please try again.",
   "whatsapp.error.delete": "Failed to unlink. Please try again.",
+  "whatsapp.error.resend": "Failed to resend verification. Please try again.",
+  "whatsapp.error.no_number": "No number saved. Please add a phone number first.",
   "whatsapp.error.format": "Enter a valid number with country code, no + (e.g. 60123456789)"
 }

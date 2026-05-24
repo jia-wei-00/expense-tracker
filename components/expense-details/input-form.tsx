@@ -20,11 +20,11 @@ const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
     });
   }, [category, isExpense]);
 
+  const categoryWatch = watch("category");
   const displayValue = useMemo(() => {
-    return filteredCategory?.find((category) => {
-      return category.id === watch("category");
-    })?.name;
-  }, [filteredCategory, watch("category")]);
+    return filteredCategory?.find((category) => category.id === categoryWatch)
+      ?.name;
+  }, [filteredCategory, categoryWatch]);
 
   return (
     <VStack

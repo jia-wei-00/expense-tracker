@@ -1,49 +1,55 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useSessionStore } from "@/store/useSession";
+import { AI_BASE_URL } from "@/constants/api";
 import {
   TMessage,
   TMessageContentPart,
   TPendingToolCall,
   TAiChatResponse,
 } from "@/types/hooks/use-agent";
-import { useState } from "react";
 
 export function useChat() {
   const [messages, setMessages] = useState<TMessage[]>([]);
-  const [loading, setLoading] = useState(false);
   const [pendingToolCall, setPendingToolCall] = useState<
     TPendingToolCall[] | null
   >(null);
 
-  const sendMessage = async (userText: string, imageUrl?: string) => {
-    if (loading || (!userText.trim() && !imageUrl)) return;
+  const session = useSessionStore((state) => state.session);
 
-    let content: TMessage["content"];
-    if (imageUrl) {
-      const parts: TMessageContentPart[] = [];
-      if (userText.trim()) parts.push({ type: "text", text: userText.trim() });
-      parts.push({ type: "image", url: imageUrl });
-      content = parts;
-    } else {
-      content = userText.trim();
-    }
-
-    const userMsg: TMessage = { role: "user", content };
-    const updated = [...messages, userMsg];
-    console.log(updated);
-    setMessages(updated);
-    setLoading(true);
-    setPendingToolCall(null); // clear any previous pending action
-
-    const { data, error } = await supabase.functions.invoke<TAiChatResponse>(
-      "ai-chat",
-      {
-        body: {
-          messages: updated,
+  const { mutateAsync: callAI, isPending: isSending } = useMutation<
+    TAiChatResponse,
+    Error,
+    TMessage[]
+  >({
+    mutationFn: (msgs) =>
+      fetch(`${AI_BASE_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          ...(session?.access_token && {
+            Authorization: `Bearer ${session.access_token}`,
+          }),
         },
-      },
-    );
-
-    if (error) {
+        body: JSON.stringify({ messages: msgs }),
+      }).then((res) => {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json();
+      }),
+    onSuccess: (data) => {
+      if (data.message) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.message },
+        ]);
+      }
+      if (data.pendingToolCalls) {
+        setPendingToolCall(data.pendingToolCalls);
+      }
+    },
+    onError: () => {
       setMessages((prev) => [
         ...prev,
         {
@@ -51,83 +57,96 @@ export function useChat() {
           content: "⚠️ Something went wrong. Please try again.",
         },
       ]);
-      setLoading(false);
-      return;
-    }
+    },
+  });
 
-    // Show AI reply
-    if (data?.message) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.message },
-      ]);
-    }
+  const { mutateAsync: executeActions, isPending: isConfirming } = useMutation(
+    {
+      mutationFn: async () => {
+        if (!pendingToolCall?.length) return null;
 
-    // If AI wants to write to DB, hold it for user confirmation
-    if (data?.pendingToolCalls) {
-      setPendingToolCall(data.pendingToolCalls);
-    }
+        const toAdd = pendingToolCall
+          .filter((tc) => tc.toolName === "addExpense")
+          .map((tc) => ({
+            name: tc.args.name!,
+            amount: tc.args.amount!,
+            category: tc.args.category!,
+            is_expense: tc.args.is_expense ?? true,
+            spend_date: tc.args.spend_date ?? new Date().toISOString(),
+          }));
 
-    setLoading(false);
-  };
+        const toDelete = pendingToolCall
+          .filter((tc) => tc.toolName === "deleteExpense")
+          .map((tc) => tc.args.id!);
 
-  // ---- User taps Confirm ----
-  const confirmAction = async () => {
-    if (!pendingToolCall || pendingToolCall.length === 0) return;
-    setLoading(true);
+        const [addResult, ...deleteResults] = await Promise.all([
+          toAdd.length > 0 ? supabase.from("expense").insert(toAdd) : null,
+          ...toDelete.map((id) =>
+            supabase.from("expense").delete().eq("id", id),
+          ),
+        ]);
 
-    const toAdd = pendingToolCall
-      .filter((tc) => tc.toolName === "addExpense")
-      .map((tc) => ({
-        name: tc.args.name!,
-        amount: tc.args.amount!,
-        category: tc.args.category!,
-        is_expense: tc.args.is_expense ?? true,
-        spend_date: tc.args.spend_date ?? new Date().toISOString(),
-      }));
+        if (addResult?.error || deleteResults.some((r) => r.error)) {
+          throw new Error("Some actions failed");
+        }
 
-    const toDelete = pendingToolCall
-      .filter((tc) => tc.toolName === "deleteExpense")
-      .map((tc) => tc.args.id!);
+        return { toAdd, toDelete };
+      },
+      onSuccess: (result) => {
+        setPendingToolCall(null);
+        if (!result) return;
 
-    const [addResult, ...deleteResults] = await Promise.all([
-      toAdd.length > 0 ? supabase.from("expense").insert(toAdd) : null,
-      ...toDelete.map((id) => supabase.from("expense").delete().eq("id", id)),
-    ]);
+        const parts: string[] = [];
+        if (result.toAdd.length > 0) {
+          const list = result.toAdd
+            .map((e) => `• ${e.name} — RM ${e.amount.toFixed(2)}`)
+            .join("\n");
+          parts.push(`Saved:\n${list}`);
+        }
+        if (result.toDelete.length > 0) {
+          parts.push(
+            `${result.toDelete.length} expense${result.toDelete.length > 1 ? "s" : ""} deleted`,
+          );
+        }
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: `✅ ${parts.join("\n\n")}` },
+        ]);
+      },
+      onError: () => {
+        setPendingToolCall(null);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "❌ Some actions failed. Please try again.",
+          },
+        ]);
+      },
+    },
+  );
 
-    const hasError = addResult?.error || deleteResults.some((r) => r.error);
+  const sendMessage = async (userText: string, imageUrl?: string) => {
+    if (isSending || (!userText.trim() && !imageUrl)) return;
 
-    if (hasError) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "❌ Some actions failed. Please try again.",
-        },
-      ]);
+    let content: TMessage["content"];
+    if (imageUrl) {
+      const parts: TMessageContentPart[] = [];
+      if (userText.trim()) parts.push({ type: "text", text: userText.trim() });
+      parts.push({ type: "image_url", image_url: { url: imageUrl } });
+      content = parts;
     } else {
-      const parts: string[] = [];
-      if (toAdd.length > 0) {
-        const list = toAdd
-          .map((e) => `• ${e.name} — RM ${e.amount.toFixed(2)}`)
-          .join("\n");
-        parts.push(`Saved:\n${list}`);
-      }
-      if (toDelete.length > 0)
-        parts.push(
-          `${toDelete.length} expense${toDelete.length > 1 ? "s" : ""} deleted`,
-        );
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `✅ ${parts.join("\n\n")}` },
-      ]);
+      content = userText.trim();
     }
 
+    const updated = [...messages, { role: "user" as const, content }];
+    setMessages(updated);
     setPendingToolCall(null);
-    setLoading(false);
+    await callAI(updated);
   };
 
-  // ---- User removes one pending item ----
+  const confirmAction = () => executeActions();
+
   const removeItem = (index: number) => {
     setPendingToolCall((prev) => {
       if (!prev) return null;
@@ -136,7 +155,6 @@ export function useChat() {
     });
   };
 
-  // ---- User taps Cancel ----
   const cancelAction = () => {
     setPendingToolCall(null);
     setMessages((prev) => [
@@ -148,7 +166,6 @@ export function useChat() {
     ]);
   };
 
-  // ---- Clear chat ----
   const clearMessages = () => {
     setMessages([]);
     setPendingToolCall(null);
@@ -156,7 +173,7 @@ export function useChat() {
 
   return {
     messages,
-    loading,
+    loading: isSending || isConfirming,
     pendingToolCall,
     sendMessage,
     confirmAction,
