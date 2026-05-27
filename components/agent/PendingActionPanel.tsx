@@ -26,7 +26,10 @@ const PendingActionPanel = ({
   const { addExpense, deleteExpense } = useMemo(() => {
     return pendingToolCalls.reduce<{
       addExpense: { args: TPendingToolCall["args"]; originalIndex: number }[];
-      deleteExpense: { args: TPendingToolCall["args"]; originalIndex: number }[];
+      deleteExpense: {
+        args: TPendingToolCall["args"];
+        originalIndex: number;
+      }[];
     }>(
       (acc, item, index) => {
         acc[item.toolName].push({ args: item.args, originalIndex: index });
@@ -96,9 +99,14 @@ const PendingActionPanel = ({
               key={originalIndex}
               className="items-center justify-between bg-background-0 rounded-xl px-3 py-2 border border-outline-50"
             >
-              <Text className="text-sm text-typography-900">
-                {t("pending.delete")} #{args.id}
-              </Text>
+              <VStack>
+                <Text className="text-sm text-typography-900">
+                  {t("pending.delete")}
+                </Text>
+                <Text size="sm">
+                  #{args.id} - {args.name}
+                </Text>
+              </VStack>
               <Button
                 variant="link"
                 size="sm"
