@@ -7,6 +7,9 @@ import { TCategory } from "@/types/store/useCategory";
 import { useEffect } from "react";
 import dayjs from "dayjs";
 
+const isMonthKey = (key: unknown): key is string =>
+  typeof key === "string" && /^\d{4}-\d{2}$/.test(key);
+
 export const useExpenseSubscription = () => {
   const userId = useSessionStore((state) => state.getUserId());
   const queryClient = useQueryClient();
@@ -34,6 +37,30 @@ export const useExpenseSubscription = () => {
             );
           };
 
+          // Invalidate monthly chart queries unconditionally — they don't depend
+          // on the infinite-expenses cache, so they must refresh even when that
+          // cache is empty.
+          if (eventType === "INSERT" || eventType === "UPDATE") {
+            if (expense.spend_date) {
+              queryClient.invalidateQueries({
+                queryKey: [dayjs(expense.spend_date).format("YYYY-MM")],
+              });
+            }
+            if (
+              eventType === "UPDATE" &&
+              old.spend_date &&
+              old.spend_date !== expense.spend_date
+            ) {
+              queryClient.invalidateQueries({
+                queryKey: [dayjs(old.spend_date).format("YYYY-MM")],
+              });
+            }
+          } else if (eventType === "DELETE") {
+            queryClient.invalidateQueries({
+              predicate: (query) => isMonthKey(query.queryKey[0]),
+            });
+          }
+
           queryClient.setQueryData<InfiniteData<IExpense[]>>(
             [QUERY_KEY.EXPENSES, userId],
             (oldData) => {
@@ -41,11 +68,6 @@ export const useExpenseSubscription = () => {
 
               switch (eventType) {
                 case "INSERT": {
-                  if (expense.spend_date) {
-                    queryClient.invalidateQueries({
-                      queryKey: [dayjs(expense.spend_date).format("YYYY-MM")],
-                    });
-                  }
                   const newExpense = {
                     ...expense,
                     category: getCategoryName(expense.category),
@@ -62,16 +84,6 @@ export const useExpenseSubscription = () => {
                   };
                 }
                 case "UPDATE": {
-                  if (expense.spend_date) {
-                    queryClient.invalidateQueries({
-                      queryKey: [dayjs(expense.spend_date).format("YYYY-MM")],
-                    });
-                  }
-                  if (old.spend_date && old.spend_date !== expense.spend_date) {
-                    queryClient.invalidateQueries({
-                      queryKey: [dayjs(old.spend_date).format("YYYY-MM")],
-                    });
-                  }
                   const updatedExpense = {
                     ...expense,
                     category: getCategoryName(expense.category),
@@ -84,14 +96,6 @@ export const useExpenseSubscription = () => {
                   };
                 }
                 case "DELETE":
-                  queryClient.invalidateQueries({
-                    predicate: (query) => {
-                      const key = query.queryKey[0];
-                      return (
-                        typeof key === "string" && /^\d{4}-\d{2}$/.test(key)
-                      );
-                    },
-                  });
                   return {
                     ...oldData,
                     pages: oldData.pages.map((page) =>

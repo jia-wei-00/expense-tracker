@@ -41,8 +41,17 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 - Markdown-rendered AI responses
 <img width="300" alt="Screenrecorder-2026-05-17-20-09-26-79" src="https://github.com/user-attachments/assets/99713192-2a57-42e3-9a75-a36a60bb96c9" />
 
+### WhatsApp Bot
+1. Enter your WhatsApp phone number in the Settings screen
+2. The backend sends a verification message to that WhatsApp number
+3. Reply to the verification message in WhatsApp to confirm ownership
+4. Once verified, query your expenses directly from WhatsApp (e.g. "What did I spend this month?")
+- Verification status is reflected in real time via Supabase Realtime
+- Resend verification, update phone number, or unlink at any time from Settings
+
 ### Settings
 - Language switcher: English and Chinese (简体中文)
+- WhatsApp bot registration (link / verify / unlink)
 - Sign out
 
 ## Tech Stack
@@ -77,6 +86,7 @@ Create a `.env` file at the root:
 EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
 EXPO_PUBLIC_MMKV_ENCRYPTION_KEY=your_mmkv_key
+EXPO_PUBLIC_AI_API_URL=your_whatsapp_bot_backend_url
 ```
 
 Set the following as Supabase Edge Function secrets:
@@ -103,6 +113,8 @@ supabase functions deploy ai-chat
 
 Create a public storage bucket named `chat-images` in the Supabase dashboard for AI image uploads (8 MB limit, allowed types: JPEG, PNG, WebP, HEIC).
 
+Create a `whatsapp_users` table with columns `user_id`, `phone_number`, and `is_verified` to store WhatsApp bot registrations. Enable Realtime on this table so verification status updates are reflected instantly in the app.
+
 ## Project Structure
 
 ```
@@ -115,9 +127,10 @@ components/
   agent/          # Chat UI: bubble, input, pending action panel
   history/        # History list item
   home/           # Dashboard chart and legend
+  settings/       # WhatsApp bot registration panel
   shared/         # Reusable components (Container, TransactionItem, etc.)
   ui/             # Gluestack UI primitives
-hooks/            # TanStack Query hooks and Supabase subscriptions
+hooks/            # TanStack Query hooks and Supabase subscriptions (includes useWhatsApp, useWhatsAppSubscription)
 store/            # Zustand stores (auth, session)
 supabase/
   functions/

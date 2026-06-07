@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Text } from "@/components/ui/text";
 import { FlashList } from "@shopify/flash-list";
 import Animated from "react-native-reanimated";
+import { RefreshControl } from "react-native";
 import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
@@ -32,6 +33,8 @@ const History = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
+    isRefetching,
   } = useInfiniteExpenses();
 
   const { mutate: bulkDelete, isPending: isDeleting } = useBulkDeleteExpenses();
@@ -130,6 +133,12 @@ const History = () => {
               scrollEventThrottle={16}
               onEndReached={fetchNextPage}
               onEndReachedThreshold={0.5}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefetching && !isFetchingNextPage}
+                  onRefresh={refetch}
+                />
+              }
             />
           </VStack>
         )}

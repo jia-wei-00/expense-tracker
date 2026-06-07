@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import Animated from "react-native-reanimated";
+import { RefreshControl } from "react-native";
 import { useTranslation } from "react-i18next";
 import Container from "@/components/shared/Container";
 import LoanCard from "@/components/loan/LoanCard";
@@ -18,7 +19,7 @@ const Separator = () => <Box className="h-3" />;
 
 const Loans = () => {
   const { t } = useTranslation("loan");
-  const { data: loans = [] } = useLoans();
+  const { data: loans = [], refetch, isRefetching } = useLoans();
   const [addModalOpen, setAddModalOpen] = useState(false);
 
   const renderItem = useCallback(
@@ -40,6 +41,12 @@ const Loans = () => {
             ItemSeparatorComponent={Separator}
             onScroll={scrollHandler}
             scrollEventThrottle={16}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+              />
+            }
           />
         )}
       </Container>

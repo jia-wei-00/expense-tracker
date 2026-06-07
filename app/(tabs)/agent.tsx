@@ -1,11 +1,14 @@
 import ChatBubble from "@/components/agent/ChatBubble";
 import ChatInput from "@/components/agent/ChatInput";
+import ContextMeter from "@/components/agent/ContextMeter";
 import EmptyState from "@/components/agent/EmptyState";
 import PendingActionPanel from "@/components/agent/PendingActionPanel";
 import { Box } from "@/components/ui/box";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { VStack } from "@/components/ui/vstack";
 import { useChat } from "@/hooks/useAgent";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { useCategory } from "@/hooks/useCategory";
@@ -43,7 +46,11 @@ export default function AgentScreen() {
     cancelAction,
     clearMessages,
     removeItem,
+    tokenEstimate,
+    contextLimit,
   } = useChat();
+
+  const overLimit = tokenEstimate >= contextLimit;
 
   const displayMessages: TDisplayMessage[] = loading
     ? [...messages, { role: "assistant", content: "", isLoading: true }]
@@ -71,13 +78,13 @@ export default function AgentScreen() {
 
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
-    if ((!text && !pendingImageUrl) || loading) return;
+    if ((!text && !pendingImageUrl) || loading || overLimit) return;
     setInputText("");
     const imageUrl = pendingImageUrl;
     setPendingImageUrl(null);
     await sendMessage(text, imageUrl ?? undefined);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [inputText, loading, pendingImageUrl, sendMessage]);
+  }, [inputText, loading, overLimit, pendingImageUrl, sendMessage]);
 
   const handleSuggestion = useCallback((text: string) => {
     setInputText(text);
@@ -107,19 +114,29 @@ export default function AgentScreen() {
     >
       <SafeAreaView edges={["top", "left", "right"]} className="flex-1">
         <Box className="flex-1 px-3">
-          <HStack className="items-center justify-between my-5">
-            <Heading size="2xl">{t("title")}</Heading>
-            {messages.length > 0 && (
-              <Button
-                variant="link"
-                size="sm"
-                onPress={clearMessages}
-                isDisabled={loading}
-              >
-                <ButtonIcon as={Trash2} className="text-typography-400" />
-              </Button>
+          <VStack className="my-5" space="xs">
+            <HStack className="items-center justify-between">
+              <Heading size="2xl">{t("title")}</Heading>
+              <HStack space="sm" className="items-center">
+                <ContextMeter used={tokenEstimate} limit={contextLimit} />
+                {messages.length > 0 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onPress={clearMessages}
+                    isDisabled={loading}
+                  >
+                    <ButtonIcon as={Trash2} className="text-typography-400" />
+                  </Button>
+                )}
+              </HStack>
+            </HStack>
+            {overLimit && (
+              <Text size="xs" className="text-error-600">
+                {t("context.full")}
+              </Text>
             )}
-          </HStack>
+          </VStack>
 
           {displayMessages.length === 0 ? (
             <EmptyState onSuggestion={handleSuggestion} />
@@ -151,7 +168,7 @@ export default function AgentScreen() {
             value={inputText}
             onChange={setInputText}
             onSend={handleSend}
-            isDisabled={loading}
+            isDisabled={loading || overLimit}
             pendingImageUrl={pendingImageUrl}
             isUploading={isUploading}
             onPickImage={handlePickImage}

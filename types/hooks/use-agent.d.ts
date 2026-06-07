@@ -24,6 +24,20 @@ export type TPendingToolCall = {
 };
 
 export type TAiChatResponse = {
+  message: string | null;
+  pendingToolCalls: TPendingToolCall[] | null;
+  sessionId: string | null;
+};
+
+export type TAttachment = {
+  url: string;
+  contentType: string;
+  name?: string;
+};
+
+export type TChatRequest = {
   message: string;
-  pendingToolCalls?: TPendingToolCall[];
+  attachments?: TAttachment[];
+  sessionId?: string;
+  analyticsMode?: boolean;
 };

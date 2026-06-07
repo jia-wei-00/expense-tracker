@@ -120,16 +120,15 @@ export const useAddExpense = () => {
       return data;
     },
     onSuccess: (data) => {
-      if (data && data.length > 0) {
-        const isCurrentMonth = dayjs(data[0].spend_date).isSame(
-          dayjs(),
-          "month",
-        );
-        if (isCurrentMonth) {
-          const monthKey = dayjs(data[0].spend_date).format("YYYY-MM");
-          queryClient.invalidateQueries({ queryKey: [monthKey] });
-        }
-      }
+      const monthKeys = new Set(
+        (data ?? [])
+          .map((row) => row.spend_date)
+          .filter((d): d is string => !!d)
+          .map((d) => dayjs(d).format("YYYY-MM")),
+      );
+      monthKeys.forEach((monthKey) =>
+        queryClient.invalidateQueries({ queryKey: [monthKey] }),
+      );
     },
     onError: () => showError(t("error.save")),
   });
@@ -151,16 +150,15 @@ export const useUpdateExpense = () => {
       return data;
     },
     onSuccess: (data) => {
-      if (data && data.length > 0) {
-        const isCurrentMonth = dayjs(data[0].spend_date).isSame(
-          dayjs(),
-          "month",
-        );
-        if (isCurrentMonth) {
-          const monthKey = dayjs(data[0].spend_date).format("YYYY-MM");
-          queryClient.invalidateQueries({ queryKey: [monthKey] });
-        }
-      }
+      const monthKeys = new Set(
+        (data ?? [])
+          .map((row) => row.spend_date)
+          .filter((d): d is string => !!d)
+          .map((d) => dayjs(d).format("YYYY-MM")),
+      );
+      monthKeys.forEach((monthKey) =>
+        queryClient.invalidateQueries({ queryKey: [monthKey] }),
+      );
     },
     onError: () => showError(t("error.save")),
   });
@@ -176,7 +174,7 @@ export const useDeleteExpense = () => {
       if (error) throw error;
     },
     onSuccess: (_, { spend_date }) => {
-      if (dayjs(spend_date).isSame(dayjs(), "month")) {
+      if (spend_date) {
         const monthKey = dayjs(spend_date).format("YYYY-MM");
         queryClient.invalidateQueries({ queryKey: [monthKey] });
       }

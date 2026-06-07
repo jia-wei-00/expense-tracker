@@ -82,7 +82,9 @@ const ControlledDropdown = ({
               <SelectTrigger variant={variant} size="md">
                 <SelectInput
                   placeholder={placeholder}
-                  value={displayValue ?? (isCalendar ? formattedDate : (value ?? ""))}
+                  {...(isCalendar && { value: formattedDate })}
+                  {...(!value && { value: "" })}
+                  {...(displayValue && { value: displayValue })}
                   className="flex-1"
                 />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />

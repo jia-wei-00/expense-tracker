@@ -3,10 +3,38 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
 import type { ILoan, TAddLoan, TAddLoanRecord, TUpdateLoan } from "@/types/store/useLoan";
 import { QUERY_KEY } from "@/constants/query-key";
+
+const LOAN_CATEGORY_NAME = "Loan";
+
+const findOrCreateLoanCategory = async (userId: string): Promise<number> => {
+  const existing = await supabase
+    .from("expense_category")
+    .select("id")
+    .eq("name", LOAN_CATEGORY_NAME)
+    .eq("is_expense", true)
+    .maybeSingle();
+
+  if (existing.error) throw existing.error;
+  if (existing.data?.id) return existing.data.id;
+
+  const created = await supabase
+    .from("expense_category")
+    .insert({
+      user_id: userId,
+      name: LOAN_CATEGORY_NAME,
+      is_expense: true,
+    })
+    .select("id")
+    .single();
+
+  if (created.error) throw created.error;
+  return created.data.id;
+};
 
 export const useLoans = () => {
   const userId = useSessionStore((state) => state.getUserId());
@@ -120,11 +148,33 @@ export const useAddLoanRecord = () => {
 
   return useMutation({
     mutationFn: async (record: TAddLoanRecord) => {
+      if (!userId) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("loan_record")
-        .insert({ ...record, user_id: userId! })
+        .insert({ ...record, user_id: userId })
         .select();
       if (error) throw error;
+
+      const loans = queryClient.getQueryData<ILoan[]>([
+        QUERY_KEY.LOANS,
+        userId,
+      ]);
+      const loanName =
+        loans?.find((l) => l.id === record.loan)?.name ?? LOAN_CATEGORY_NAME;
+
+      const categoryId = await findOrCreateLoanCategory(userId);
+
+      const { error: expenseError } = await supabase.from("expense").insert({
+        user_id: userId,
+        amount: Number(record.amount ?? 0),
+        spend_date: record.pay_date,
+        is_expense: true,
+        name: loanName,
+        category: categoryId,
+      });
+      if (expenseError) throw expenseError;
+
       return data;
     },
     onSuccess: (_, record) => {
@@ -132,6 +182,12 @@ export const useAddLoanRecord = () => {
         queryKey: [QUERY_KEY.LOAN_RECORDS, record.loan],
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY.LOANS, userId] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY.CATEGORIES] });
+      if (record.pay_date) {
+        queryClient.invalidateQueries({
+          queryKey: [dayjs(record.pay_date).format("YYYY-MM")],
+        });
+      }
     },
   });
 };

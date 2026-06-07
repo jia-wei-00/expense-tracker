@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import dayjs from "dayjs";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
@@ -6,7 +6,7 @@ import Container from "@/components/shared/Container";
 import { useTranslation } from "react-i18next";
 import { FlashList } from "@shopify/flash-list";
 import { useInfiniteExpenses } from "@/hooks/useExpenses";
-import { View } from "react-native";
+import { RefreshControl, View } from "react-native";
 import { Box } from "@/components/ui/box";
 import TransactionItem from "@/components/shared/TransactionItem";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import { Plus } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
 import Chart from "@/components/home/chart";
 import MonthYearPicker from "@/components/home/MonthYearPicker";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSessionStore } from "@/store/useSession";
+import { QUERY_KEY } from "@/constants/query-key";
 
 const Separator = () => <Divider className="my-2" />;
 
@@ -24,6 +27,22 @@ const Home = () => {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().toDate());
   const { data: expensesData } = useInfiniteExpenses();
   const expenses = expensesData?.pages.flat() ?? [];
+  const queryClient = useQueryClient();
+  const userId = useSessionStore((state) => state.getUserId());
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    const monthKey = dayjs(selectedMonth).format("YYYY-MM");
+    try {
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: [monthKey] }),
+        queryClient.refetchQueries({ queryKey: [QUERY_KEY.EXPENSES, userId] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient, selectedMonth, userId]);
 
   const handleViewAll = () => {
     router.push("/(tabs)/explore");
@@ -31,7 +50,12 @@ const Home = () => {
 
   return (
     <>
-      <Container title={t("insights")}>
+      <Container
+        title={t("insights")}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
         <View className="gap-2">
           <MonthYearPicker value={selectedMonth} onChange={setSelectedMonth} />
           <Chart type="expense" month={selectedMonth} />
