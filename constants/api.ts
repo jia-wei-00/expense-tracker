@@ -1,1 +1,2 @@
-export const AI_BASE_URL = process.env.EXPO_PUBLIC_AI_API_URL;
+export const AI_BASE_URL =
+  "https://extensive-vegetable-intervals-come.trycloudflare.com";

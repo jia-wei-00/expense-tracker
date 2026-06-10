@@ -3,6 +3,8 @@
 
 A personal finance tracking app built with React Native and Expo. Track expenses and income, manage loans, and use an AI assistant to log transactions by text or photo.
 
+> **Backend service:** [jia-wei-00/expense-tracker-worker](https://github.com/jia-wei-00/expense-tracker-worker) — Cloudflare Worker powering the AI chat (`/chat`) and WhatsApp bot (`/whatsapp/*`) endpoints used by this app.
+
 ## Features
 
 ### Dashboard (Home)
@@ -42,12 +44,18 @@ A personal finance tracking app built with React Native and Expo. Track expenses
 <img width="300" alt="Screenrecorder-2026-05-17-20-09-26-79" src="https://github.com/user-attachments/assets/99713192-2a57-42e3-9a75-a36a60bb96c9" />
 
 ### WhatsApp Bot
-1. Enter your WhatsApp phone number in the Settings screen
+Chat with the expense tracker straight from WhatsApp once your number is linked.
+
+**Setup flow:**
+1. Open **Settings → WhatsApp Bot** and enter your phone number (country code, no `+`, e.g. `60123456789`)
 2. The backend sends a verification message to that WhatsApp number
 3. Reply to the verification message in WhatsApp to confirm ownership
-4. Once verified, query your expenses directly from WhatsApp (e.g. "What did I spend this month?")
-- Verification status is reflected in real time via Supabase Realtime
-- Resend verification, update phone number, or unlink at any time from Settings
+4. The Settings screen flips to **Verified** in real time (via Supabase Realtime)
+
+**Once verified:**
+- Send messages on WhatsApp to query your data — e.g. *"What did I spend this month?"* or *"How much on food last week?"*
+- Verification status, phone number, and link state stay in sync across the app
+- Resend verification, update the phone number, or unlink at any time from Settings
 
 ### Settings
 - Language switcher: English and Chinese (简体中文)
