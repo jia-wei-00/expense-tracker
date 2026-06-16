@@ -1,6 +1,12 @@
 export type TMessageContentPart =
   | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: string } };
+  | { type: "image_url"; image_url: { url: string } }
+  | { type: "audio_url"; audio_url: { url: string } };
+
+export type TMediaAttachment = {
+  url: string;
+  kind: "image" | "audio";
+};
 
 export type TMessage = {
   role: "user" | "assistant";

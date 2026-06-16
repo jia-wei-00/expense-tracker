@@ -19,6 +19,8 @@
   "cancel": "Cancel",
   "pending.title": "AI wants to save this. Confirm?",
   "pending.delete": "Delete this expense?",
-  "ocr.prompt": "Please scan this receipt and extract all expense details including merchant name, items, amounts, and total.",
+  "voice.recording": "Recording…",
+  "voice.sending": "Sending voice…",
+  "voice.permission": "Microphone access is needed to record voice messages.",
   "context.full": "Context full — clear the chat to continue."
 }

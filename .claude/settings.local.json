@@ -17,7 +17,11 @@
       "mcp__supabase__list_tables",
       "Bash(npm run *)",
       "Bash(grep -v \"components\\\\\\\\ui\\\\\\\\\")",
-      "Bash(Select-String -NotMatch \"components/ui/\")"
+      "Bash(Select-String -NotMatch \"components/ui/\")",
+      "mcp__supabase__get_edge_function",
+      "PowerShell(npx expo install expo-audio)",
+      "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Select-Object -First 40)",
+      "PowerShell(npx eslint \"app/\\(tabs\\)/agent.tsx\" \"components/agent/ChatInput.tsx\" \"components/agent/ChatBubble.tsx\" \"components/agent/VoiceMessage.tsx\" \"hooks/useVoiceRecorder.ts\" \"hooks/useAgent.ts\" 2>&1 | Select-Object -First 40)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -9,6 +9,7 @@ import { IChatBubble } from "@/types/components/agent/chat-bubble";
 import { cn } from "@/lib/utils";
 import BotAvatar from "@/components/agent/BotAvatar";
 import TypingDots from "@/components/agent/TypingDots";
+import VoiceMessage from "@/components/agent/VoiceMessage";
 
 const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
   const isUser = role === "user";
@@ -101,6 +102,15 @@ const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
                   source={{ uri: part.image_url.url }}
                   style={{ width: 200, height: 150, borderRadius: 8 }}
                   contentFit="cover"
+                />
+              );
+            }
+            if (part.type === "audio_url") {
+              return (
+                <VoiceMessage
+                  key={i}
+                  url={part.audio_url.url}
+                  isUser={isUser}
                 />
               );
             }

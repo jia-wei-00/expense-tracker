@@ -7,6 +7,7 @@ import storage from "@/lib/storage";
 import {
   TMessage,
   TMessageContentPart,
+  TMediaAttachment,
   TPendingToolCall,
   TAiChatResponse,
   TChatRequest,
@@ -44,6 +45,8 @@ const estimateTokens = (messages: TMessage[]): number => {
         // Image parts: a rough constant — most providers bill ~85 tokens per
         // low-detail image; we round to 340 chars to fit the chars/4 heuristic.
         else if (part.type === "image_url") chars += 340;
+        // Audio parts: a rough constant placeholder for a short voice clip.
+        else if (part.type === "audio_url") chars += 340;
       }
     }
   }
@@ -90,7 +93,7 @@ export function useChat() {
           ...headers,
           Authorization: headers.Authorization ? "Bearer ***" : undefined,
         },
-        body,
+        body: JSON.stringify(body),
       });
       return fetch(url, {
         method: "POST",
@@ -98,12 +101,17 @@ export function useChat() {
         body: JSON.stringify(body),
       })
         .then(async (res) => {
-          console.log("[ai-chat] ←", {
-            status: res.status,
-            ok: res.ok,
-            statusText: res.statusText,
-          });
-          if (!res.ok) throw new Error(res.statusText);
+          if (!res.ok) {
+            const errorBody = await res.text();
+            console.log("[ai-chat] ←", {
+              status: res.status,
+              ok: res.ok,
+              statusText: res.statusText,
+              body: errorBody,
+            });
+            throw new Error(errorBody || res.statusText || `HTTP ${res.status}`);
+          }
+          console.log("[ai-chat] ←", { status: res.status, ok: res.ok });
           return res.json();
         })
         .catch((err) => {
@@ -196,16 +204,23 @@ export function useChat() {
     },
   });
 
-  const sendMessage = async (userText: string, imageUrl?: string) => {
-    if (isSending || (!userText.trim() && !imageUrl)) return;
+  const sendMessage = async (
+    userText: string,
+    media?: TMediaAttachment,
+  ) => {
+    if (isSending || (!userText.trim() && !media)) return;
 
     const trimmed = userText.trim();
 
     let displayContent: TMessage["content"];
-    if (imageUrl) {
+    if (media) {
       const parts: TMessageContentPart[] = [];
       if (trimmed) parts.push({ type: "text", text: trimmed });
-      parts.push({ type: "image_url", image_url: { url: imageUrl } });
+      parts.push(
+        media.kind === "audio"
+          ? { type: "audio_url", audio_url: { url: media.url } }
+          : { type: "image_url", image_url: { url: media.url } },
+      );
       displayContent = parts;
     } else {
       displayContent = trimmed;
@@ -219,13 +234,14 @@ export function useChat() {
 
     await callAI({
       message: trimmed,
-      ...(imageUrl
+      ...(media
         ? {
             attachments: [
               {
-                url: imageUrl,
-                contentType: "image/jpeg",
-                name: imageUrl.split("/").pop(),
+                url: media.url,
+                contentType:
+                  media.kind === "audio" ? "audio/mp4" : "image/jpeg",
+                name: media.url.split("/").pop(),
               },
             ],
           }

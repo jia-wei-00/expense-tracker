@@ -8,7 +8,15 @@ import { Button, ButtonIcon } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { IChatInput } from "@/types/components/agent/chat-input";
-import { ImagePlus, ScanLine, X, ArrowUp } from "lucide-react-native";
+import { Text } from "@/components/ui/text";
+import {
+  ImagePlus,
+  ScanLine,
+  X,
+  ArrowUp,
+  Mic,
+  Trash2,
+} from "lucide-react-native";
 import { cn } from "@/lib/utils";
 
 const ChatInput = ({
@@ -21,6 +29,11 @@ const ChatInput = ({
   onPickImage,
   onRemoveImage,
   onScanReceipt,
+  isRecording,
+  isUploadingAudio,
+  onStartRecording,
+  onStopRecording,
+  onCancelRecording,
 }: IChatInput) => {
   const { t } = useTranslation("agent");
   const canSend = !isDisabled && !isUploading && !!(value.trim() || pendingImageUrl);
@@ -53,63 +66,120 @@ const ChatInput = ({
         </Box>
       )}
 
-      <HStack space="sm" className="items-end">
-        <Button
-          variant="link"
-          size="md"
-          onPress={onPickImage}
-          isDisabled={isDisabled || isUploading}
-        >
-          <ButtonIcon as={ImagePlus} className="text-typography-500" />
-        </Button>
-
-        <Button
-          variant="link"
-          size="md"
-          onPress={onScanReceipt}
-          isDisabled={isDisabled || isUploading}
-        >
-          <ButtonIcon as={ScanLine} className="text-typography-500" />
-        </Button>
-
-        <Input variant="outline" size="md" className="flex-1 rounded-2xl">
-          <InputField
-            placeholder={t("placeholder")}
-            value={value}
-            onChangeText={onChange}
-            multiline
-            maxLength={500}
-            returnKeyType="send"
-            onSubmitEditing={onSend}
-          />
-        </Input>
-
-        <Box
-          className={cn(
-            "w-10 h-10 rounded-full items-center justify-center",
-            canSend
-              ? "bg-[rgb(40,40,40)] dark:bg-[rgb(230,230,230)]"
-              : "bg-[rgb(220,219,219)] dark:bg-[rgb(55,54,54)]"
-          )}
-        >
+      {isRecording ? (
+        <HStack space="sm" className="items-center">
           <Button
             variant="link"
             size="md"
-            onPress={onSend}
-            isDisabled={!canSend}
-            className="w-10 h-10 rounded-full p-0"
+            onPress={onCancelRecording}
           >
-            <ButtonIcon
-              as={ArrowUp}
-              className={cn(
-                canSend
-                  ? "text-[rgb(240,240,240)] dark:text-[rgb(20,20,20)]"
-                  : "text-[rgb(150,150,150)] dark:text-[rgb(100,100,100)]"
-              )}
-            />
+            <ButtonIcon as={Trash2} className="text-error-500" />
           </Button>
-        </Box>
-      </HStack>
+
+          <HStack
+            space="sm"
+            className="flex-1 items-center rounded-2xl bg-background-100 px-4 py-3"
+          >
+            <Box className="h-2.5 w-2.5 rounded-full bg-error-500" />
+            <Text size="sm" className="text-typography-600">
+              {t("voice.recording")}
+            </Text>
+          </HStack>
+
+          <Box className="h-10 w-10 items-center justify-center rounded-full bg-[rgb(40,40,40)] dark:bg-[rgb(230,230,230)]">
+            <Button
+              variant="link"
+              size="md"
+              onPress={onStopRecording}
+              className="h-10 w-10 rounded-full p-0"
+            >
+              <ButtonIcon
+                as={ArrowUp}
+                className="text-[rgb(240,240,240)] dark:text-[rgb(20,20,20)]"
+              />
+            </Button>
+          </Box>
+        </HStack>
+      ) : isUploadingAudio ? (
+        <HStack
+          space="sm"
+          className="items-center rounded-2xl bg-background-100 px-4 py-3"
+        >
+          <ActivityIndicator size="small" />
+          <Text size="sm" className="text-typography-600">
+            {t("voice.sending")}
+          </Text>
+        </HStack>
+      ) : (
+        <HStack space="sm" className="items-end">
+          <Button
+            variant="link"
+            size="md"
+            onPress={onPickImage}
+            isDisabled={isDisabled || isUploading}
+          >
+            <ButtonIcon as={ImagePlus} className="text-typography-500" />
+          </Button>
+
+          <Button
+            variant="link"
+            size="md"
+            onPress={onScanReceipt}
+            isDisabled={isDisabled || isUploading}
+          >
+            <ButtonIcon as={ScanLine} className="text-typography-500" />
+          </Button>
+
+          <Input variant="outline" size="md" className="flex-1 rounded-2xl">
+            <InputField
+              placeholder={t("placeholder")}
+              value={value}
+              onChangeText={onChange}
+              multiline
+              maxLength={500}
+              returnKeyType="send"
+              onSubmitEditing={onSend}
+            />
+          </Input>
+
+          {value.trim() || pendingImageUrl ? (
+            <Box
+              className={cn(
+                "w-10 h-10 rounded-full items-center justify-center",
+                canSend
+                  ? "bg-[rgb(40,40,40)] dark:bg-[rgb(230,230,230)]"
+                  : "bg-[rgb(220,219,219)] dark:bg-[rgb(55,54,54)]"
+              )}
+            >
+              <Button
+                variant="link"
+                size="md"
+                onPress={onSend}
+                isDisabled={!canSend}
+                className="w-10 h-10 rounded-full p-0"
+              >
+                <ButtonIcon
+                  as={ArrowUp}
+                  className={cn(
+                    canSend
+                      ? "text-[rgb(240,240,240)] dark:text-[rgb(20,20,20)]"
+                      : "text-[rgb(150,150,150)] dark:text-[rgb(100,100,100)]"
+                  )}
+                />
+              </Button>
+            </Box>
+          ) : (
+            <Button
+              variant="link"
+              size="md"
+              onPress={onStartRecording}
+              isDisabled={isDisabled || isUploading}
+            >
+              <ButtonIcon as={Mic} className="text-typography-500" />
+            </Button>
+          )}
+        </HStack>
+      )}
     </VStack>
   );
 };

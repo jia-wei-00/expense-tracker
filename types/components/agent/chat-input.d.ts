@@ -8,4 +8,9 @@ export interface IChatInput {
   onPickImage: () => void;
   onRemoveImage: () => void;
   onScanReceipt: () => void;
+  isRecording: boolean;
+  isUploadingAudio: boolean;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  onCancelRecording: () => void;
 }

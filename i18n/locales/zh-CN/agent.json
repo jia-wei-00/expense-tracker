@@ -19,6 +19,8 @@
   "cancel": "取消",
   "pending.title": "AI 想要保存此记录，确认吗？",
   "pending.delete": "删除此支出？",
-  "ocr.prompt": "请扫描此收据并提取所有支出详情，包括商家名称、项目、金额和总计。",
+  "voice.recording": "录音中…",
+  "voice.sending": "发送语音中…",
+  "voice.permission": "需要麦克风权限才能录制语音消息。",
   "context.full": "上下文已满 — 请清空对话以继续。"
 }

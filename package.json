@@ -33,6 +33,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
     "expo": "~55.0.26",
+    "expo-audio": "~55.0.14",
     "expo-constants": "~55.0.2",
     "expo-font": "~55.0.2",
     "expo-haptics": "~55.0.14",

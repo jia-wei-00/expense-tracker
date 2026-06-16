@@ -11,6 +11,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useChat } from "@/hooks/useAgent";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { useCategory } from "@/hooks/useCategory";
 import { useErrorToast } from "@/hooks/useErrorToast";
 import { TDisplayMessage } from "@/types/hooks/use-agent";
@@ -36,6 +37,13 @@ export default function AgentScreen() {
   const { data: categories } = useCategory();
   const { showError } = useErrorToast();
   const { pickAndUpload, isUploading } = useImageUpload();
+  const {
+    isRecording,
+    isUploadingAudio,
+    startRecording,
+    stopAndUpload,
+    cancelRecording,
+  } = useVoiceRecorder();
 
   const {
     messages,
@@ -69,10 +77,42 @@ export default function AgentScreen() {
     try {
       const url = await pickAndUpload("camera");
       if (!url) return;
-      await sendMessage(t("ocr.prompt"), url);
+      // Send only the image — no visible prompt text. The AI inspects the
+      // receipt and decides which tools to use on its own.
+      await sendMessage("", { url, kind: "image" });
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : t("error"));
+    }
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      const granted = await startRecording();
+      if (!granted) showError(t("voice.permission"));
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : t("error"));
+    }
+  };
+
+  const handleStopRecording = async () => {
+    try {
+      const url = await stopAndUpload();
+      if (!url) return;
+      // Send only the voice clip — no visible prompt text. The AI listens and
+      // decides which tools to use on its own.
+      await sendMessage("", { url, kind: "audio" });
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : t("error"));
+    }
+  };
+
+  const handleCancelRecording = async () => {
+    try {
+      await cancelRecording();
+    } catch {
+      // ignore — nothing to discard
     }
   };
 
@@ -82,7 +122,10 @@ export default function AgentScreen() {
     setInputText("");
     const imageUrl = pendingImageUrl;
     setPendingImageUrl(null);
-    await sendMessage(text, imageUrl ?? undefined);
+    await sendMessage(
+      text,
+      imageUrl ? { url: imageUrl, kind: "image" } : undefined,
+    );
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   }, [inputText, loading, overLimit, pendingImageUrl, sendMessage]);
 
@@ -174,6 +217,11 @@ export default function AgentScreen() {
             onPickImage={handlePickImage}
             onRemoveImage={() => setPendingImageUrl(null)}
             onScanReceipt={handleScanReceipt}
+            isRecording={isRecording}
+            isUploadingAudio={isUploadingAudio}
+            onStartRecording={handleStartRecording}
+            onStopRecording={handleStopRecording}
+            onCancelRecording={handleCancelRecording}
           />
         </Box>
       </SafeAreaView>
