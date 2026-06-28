@@ -10,7 +10,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import React, { useEffect } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 const AddExpense = () => {
@@ -34,7 +34,10 @@ const AddExpense = () => {
     );
   };
 
-  const isExpenseWatch = methods.watch("is_expense");
+  const isExpenseWatch = useWatch({
+    control: methods.control,
+    name: "is_expense",
+  });
   const { resetField } = methods;
 
   useEffect(() => {

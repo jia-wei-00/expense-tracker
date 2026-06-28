@@ -10,7 +10,6 @@ import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
-import { Button, ButtonText } from "@/components/ui/button";
 import { parseExpensePush } from "@/lib/expensePush";
 import { TPushExpenseItem } from "@/types/notification";
 

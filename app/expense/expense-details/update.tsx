@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 const UpdateExpense = () => {
@@ -39,7 +39,10 @@ const UpdateExpense = () => {
     },
   });
 
-  const isExpenseWatch = methods.watch("is_expense");
+  const isExpenseWatch = useWatch({
+    control: methods.control,
+    name: "is_expense",
+  });
   const { setValue } = methods;
 
   const isFirstRender = useRef(true);
