@@ -44,3 +44,10 @@ app-example
 
 .env
 .claude/
+.mcp.json
+
+# Firebase / FCM — keep out of the public repo (supply via EAS env vars/credentials)
+google-services.json
+google-service*.json
+*-service-account*.json
+GoogleService-Info.plist

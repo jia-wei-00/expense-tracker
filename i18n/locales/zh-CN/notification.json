@@ -1,0 +1,9 @@
+{
+  "title": "通知",
+  "addedTitle": "已添加支出",
+  "updatedTitle": "已更新支出",
+  "subtitle_other": "来自 WhatsApp 的 {{count}} 笔支出",
+  "total": "合计",
+  "viewAll": "查看所有支出",
+  "empty": "暂无支出详情。"
+}

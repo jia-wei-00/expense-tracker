@@ -1,0 +1,10 @@
+{
+  "title": "Notification",
+  "addedTitle": "Expenses Added",
+  "updatedTitle": "Expenses Updated",
+  "subtitle_one": "{{count}} expense from WhatsApp",
+  "subtitle_other": "{{count}} expenses from WhatsApp",
+  "total": "Total",
+  "viewAll": "View all expenses",
+  "empty": "No expense details available."
+}

@@ -7,6 +7,7 @@ import { useErrorToast } from "@/hooks/useErrorToast";
 import { useToast, Toast, ToastTitle } from "@/components/ui/toast";
 import { useTranslation } from "react-i18next";
 import { AI_BASE_URL } from "@/constants/api";
+import { registerForPush } from "@/hooks/usePushRegistration";
 
 class HttpError extends Error {
   constructor(
@@ -64,6 +65,8 @@ export const useSaveWhatsAppUser = () => {
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEY.WHATSAPP_USER, userId],
       });
+      // The row now exists, so the launch-time no-op can finally store the token.
+      registerForPush().catch(() => {});
     },
     onError: () => showError(t("whatsapp.error.save")),
   });

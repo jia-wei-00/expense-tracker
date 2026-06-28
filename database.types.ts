@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_message: {
+        Row: {
+          created_at: string
+          data: Json
+          id: number
+          session_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: never
+          session_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: never
+          session_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_message_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_session"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_session: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expense: {
         Row: {
           amount: number | null
@@ -143,28 +199,25 @@ export type Database = {
       }
       whatsapp_pending_actions: {
         Row: {
-          args: Json
+          actions: Json
           created_at: string | null
           expires_at: string
           id: string
           phone_number: string
-          tool_name: string
         }
         Insert: {
-          args: Json
+          actions: Json
           created_at?: string | null
           expires_at?: string
           id?: string
           phone_number: string
-          tool_name: string
         }
         Update: {
-          args?: Json
+          actions?: Json
           created_at?: string | null
           expires_at?: string
           id?: string
           phone_number?: string
-          tool_name?: string
         }
         Relationships: []
       }
@@ -173,18 +226,24 @@ export type Database = {
           created_at: string | null
           is_verified: boolean
           phone_number: string
+          push_platform: string | null
+          push_token: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
           is_verified?: boolean
           phone_number: string
+          push_platform?: string | null
+          push_token?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
           is_verified?: boolean
           phone_number?: string
+          push_platform?: string | null
+          push_token?: string | null
           user_id?: string
         }
         Relationships: []
@@ -194,6 +253,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clear_push_token: { Args: never; Returns: undefined }
       get_expense_stats: {
         Args: { p_month?: number; p_user_id: string; p_year?: number }
         Returns: {
@@ -201,6 +261,10 @@ export type Database = {
           total_expenses: number
           total_income: number
         }[]
+      }
+      set_push_token: {
+        Args: { p_platform?: string; p_token: string }
+        Returns: undefined
       }
     }
     Enums: {

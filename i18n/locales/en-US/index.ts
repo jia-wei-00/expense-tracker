@@ -6,4 +6,5 @@ export default {
   loan: require("@/i18n/locales/en-US/loan.json"),
   agent: require("@/i18n/locales/en-US/agent.json"),
   settings: require("@/i18n/locales/en-US/settings.json"),
+  notification: require("@/i18n/locales/en-US/notification.json"),
 };

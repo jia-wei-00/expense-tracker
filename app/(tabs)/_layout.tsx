@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import React from "react";
 import { HapticTab } from "@/components/haptic-tab";
 import { useExpenseSubscription } from "@/hooks/useExpenseSubscription";
+import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { Icon } from "@/components/ui/icon";
 import {
   LayoutDashboard,
@@ -17,6 +18,7 @@ export default function TabLayout() {
   const { t } = useTranslation("common");
   useExpenseSubscription();
   useCategorySubscription();
+  usePushRegistration();
 
   return (
     <Tabs
