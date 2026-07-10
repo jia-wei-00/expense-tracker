@@ -1,5 +1,5 @@
 import React from "react";
-import { useColorScheme } from "react-native";
+import { useColorScheme } from "nativewind";
 import { Image } from "expo-image";
 import Markdown from "react-native-markdown-display";
 import { Box } from "@/components/ui/box";
@@ -13,7 +13,7 @@ import VoiceMessage from "@/components/agent/VoiceMessage";
 
 const ChatBubble = ({ role, content, isLoading }: IChatBubble) => {
   const isUser = role === "user";
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
 
   // Kept for react-native-markdown-display which requires a plain style object

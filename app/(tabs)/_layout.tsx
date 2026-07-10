@@ -13,9 +13,11 @@ import {
 } from "lucide-react-native";
 import { useCategorySubscription } from "@/hooks/useCategorySubscription";
 import { useTranslation } from "react-i18next";
+import { useColorScheme } from "nativewind";
 
 export default function TabLayout() {
   const { t } = useTranslation("common");
+  const { colorScheme } = useColorScheme();
   useExpenseSubscription();
   useCategorySubscription();
   usePushRegistration();
@@ -25,7 +27,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarActiveTintColor: "#ffffff",
+        tabBarActiveTintColor: colorScheme === "dark" ? "#ffffff" : "#181718",
       }}
     >
       <Tabs.Screen

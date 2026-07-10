@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Animated, useColorScheme } from "react-native";
+import { Animated } from "react-native";
+import { useColorScheme } from "nativewind";
 import { Box } from "@/components/ui/box";
 
 const TypingDots = () => {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const dotColor = isDark ? "rgb(180,180,180)" : "rgb(110,110,110)";
 

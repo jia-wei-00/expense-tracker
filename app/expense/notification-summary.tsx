@@ -53,7 +53,7 @@ export default function NotificationSummaryScreen() {
     <>
       <Stack.Screen options={{ title }} />
       <Container>
-        <VStack space="lg" className="pt-2">
+        <VStack space="lg">
           <Box className="rounded-2xl bg-background-100 p-5">
             <HStack space="sm" className="items-center">
               <Icon as={CheckCircle2} className="text-success-600" />

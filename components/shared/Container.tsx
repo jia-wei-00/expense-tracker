@@ -25,7 +25,12 @@ type ContainerProps = {
   refreshControl?: React.ReactElement;
 };
 
-const Container = ({ children, className, title, refreshControl }: ContainerProps) => {
+const Container = ({
+  children,
+  className,
+  title,
+  refreshControl,
+}: ContainerProps) => {
   const { scrollHandler, animatedHeaderStyle } = useFadeHeader();
 
   const header = title ? (
@@ -43,11 +48,13 @@ const Container = ({ children, className, title, refreshControl }: ContainerProp
         </VStack>
       ) : (
         <>
-          <Animated.View style={animatedHeaderStyle} className="z-50">
-            <Box className="bg-background-0 p-4 absolute top-0 left-0 right-0 border-b border-outline-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-              <Heading>{title}</Heading>
-            </Box>
-          </Animated.View>
+          {title ? (
+            <Animated.View style={animatedHeaderStyle} className="z-50">
+              <Box className="bg-background-0 p-4 absolute top-0 left-0 right-0 border-b border-outline-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+                <Heading>{title}</Heading>
+              </Box>
+            </Animated.View>
+          ) : null}
           <Animated.ScrollView
             className={twJoin("px-3", className)}
             onScroll={!!title ? scrollHandler : undefined}

@@ -3,8 +3,11 @@ import { Text } from "@/components/ui/text";
 import Badge from "@/components/shared/Badge";
 import { ILegend } from "@/types/components/home/legend";
 import { HStack } from "@/components/ui/hstack";
+import { useTranslation } from "react-i18next";
 
 const Legend = ({ pieData, totalExpense }: ILegend) => {
+  const { t } = useTranslation("home");
+
   return (
     <HStack space="lg" className="flex-wrap">
       {pieData.map((item, index) => {
@@ -16,7 +19,11 @@ const Legend = ({ pieData, totalExpense }: ILegend) => {
           <HStack key={index} space="sm" className="items-center">
             <Badge className={item.colorClass} />
             <Text numberOfLines={1}>
-              {item.label}: {percentage}%
+              {t("chart.legend.item", {
+                label: item.label,
+                amount: item.value,
+                percentage,
+              })}
             </Text>
           </HStack>
         );

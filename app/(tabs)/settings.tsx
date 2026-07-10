@@ -7,6 +7,7 @@ import ActionSheet from "@/components/shared/ActionSheet";
 import { useErrorToast } from "@/hooks/useErrorToast";
 import Container from "@/components/shared/Container";
 import LanguageSwitcher from "@/components/settings/LanguageSwitcher";
+import ThemeSwitcher from "@/components/settings/ThemeSwitcher";
 import WhatsAppRegistration from "@/components/settings/WhatsAppRegistration";
 import { VStack } from "@/components/ui/vstack";
 import { useWhatsAppUser } from "@/hooks/useWhatsApp";
@@ -39,6 +40,7 @@ const Settings = () => {
       >
         <VStack space="md" className="flex-1">
           <LanguageSwitcher />
+          <ThemeSwitcher />
           <WhatsAppRegistration />
         </VStack>
         <Button

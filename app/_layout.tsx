@@ -1,5 +1,6 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSessionStore } from "@/store/useSession";
+import { useThemeStore } from "@/store/useTheme";
 import {
   DarkTheme,
   DefaultTheme,
@@ -31,7 +32,9 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const systemColorScheme = useColorScheme();
+  const mode = useThemeStore((state) => state.mode);
+  const colorScheme = mode === "system" ? systemColorScheme : mode;
   const initialize = useAuthStore((state) => state.initialize);
   const session = useSessionStore((state) => state.session);
 
@@ -40,7 +43,7 @@ export default function RootLayout() {
   }, [initialize]);
 
   return (
-    <GluestackUIProvider mode="dark">
+    <GluestackUIProvider mode={mode}>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
@@ -60,7 +63,7 @@ export default function RootLayout() {
             </Stack>
           </QueryClientProvider>
         </SafeAreaProvider>
-        <StatusBar style="auto" />
+        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
       </ThemeProvider>
     </GluestackUIProvider>
   );

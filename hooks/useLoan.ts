@@ -66,8 +66,37 @@ export const useLoans = () => {
 };
 
 export const useLoanById = (id: number) => {
+  const userId = useSessionStore((state) => state.getUserId());
   const { data: loans } = useLoans();
-  return loans?.find((loan) => loan.id === id);
+  const cached = loans?.find((loan) => loan.id === id);
+
+  // Fallback: when the loan isn't in the list cache (e.g. the details page was
+  // opened directly / cold-started), fetch it straight from Supabase by id.
+  const { data: fetched } = useQuery({
+    queryKey: [QUERY_KEY.LOANS, userId, id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loan")
+        .select("*, loan_record(amount)")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      const paid_amount = (data.loan_record ?? []).reduce(
+        (sum, r) => sum + parseFloat(r.amount ?? "0"),
+        0,
+      );
+      const remaining_amount = (data.total_amount ?? 0) - paid_amount;
+      const { loan_record: _records, ...rest } = data;
+      return { ...rest, paid_amount, remaining_amount } satisfies ILoan;
+    },
+    enabled: !!userId && !!id && !cached,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  return cached ?? fetched ?? undefined;
 };
 
 export const useAddLoan = () => {

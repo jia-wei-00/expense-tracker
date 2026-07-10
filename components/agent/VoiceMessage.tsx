@@ -42,13 +42,17 @@ const VoiceMessage = ({ url, isUser }: IVoiceMessage) => {
         <Box
           className={cn(
             "h-8 w-8 items-center justify-center rounded-full",
-            isUser ? "bg-white/25" : "bg-background-300",
+            isUser ? "bg-white/25 dark:bg-black/10" : "bg-background-300",
           )}
         >
           <Icon
             as={isPlaying ? Pause : Play}
             size="sm"
-            className={isUser ? "text-white" : "text-typography-700"}
+            className={
+              isUser
+                ? "text-[rgb(254,254,255)] dark:text-[rgb(23,23,23)]"
+                : "text-typography-700"
+            }
           />
         </Box>
         <Text
