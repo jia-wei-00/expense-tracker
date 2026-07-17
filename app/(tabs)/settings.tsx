@@ -8,9 +8,14 @@ import { useErrorToast } from "@/hooks/useErrorToast";
 import Container from "@/components/shared/Container";
 import LanguageSwitcher from "@/components/settings/LanguageSwitcher";
 import ThemeSwitcher from "@/components/settings/ThemeSwitcher";
+import CurrencySwitcher from "@/components/settings/CurrencySwitcher";
+import AppLockSwitch from "@/components/settings/AppLockSwitch";
+import SettingsLink from "@/components/settings/SettingsLink";
 import WhatsAppRegistration from "@/components/settings/WhatsAppRegistration";
 import { VStack } from "@/components/ui/vstack";
 import { useWhatsAppUser } from "@/hooks/useWhatsApp";
+import { PiggyBank, Repeat } from "lucide-react-native";
+import { router } from "expo-router";
 
 const Settings = () => {
   const [isOpened, setIsOpened] = React.useState(false);
@@ -41,6 +46,18 @@ const Settings = () => {
         <VStack space="md" className="flex-1">
           <LanguageSwitcher />
           <ThemeSwitcher />
+          <CurrencySwitcher />
+          <AppLockSwitch />
+          <SettingsLink
+            label={t("manage.budgets")}
+            icon={PiggyBank}
+            onPress={() => router.push("/budget")}
+          />
+          <SettingsLink
+            label={t("manage.recurring")}
+            icon={Repeat}
+            onPress={() => router.push("/recurring")}
+          />
           <WhatsAppRegistration />
         </VStack>
         <Button

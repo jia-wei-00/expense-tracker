@@ -23,6 +23,7 @@ import { Plus, Trash2 } from "lucide-react-native";
 import type { TLoanRecord } from "@/types/store/useLoan";
 import { Fab, FabIcon } from "@/components/ui/fab";
 import AddLoanRecordModal from "@/components/loan/AddLoanRecordModal";
+import { useCurrencyStore } from "@/store/useCurrency";
 
 const Separator = () => <Divider className="my-2" />;
 
@@ -32,6 +33,7 @@ const LoanDetail = () => {
   const loanId = Number(id);
   const { t } = useTranslation("loan");
   const { t: tCommon } = useTranslation("common");
+  const symbol = useCurrencyStore((state) => state.symbol);
   const loan = useLoanById(loanId);
   const { data: records = [] } = useLoanRecords(loanId);
   const { mutateAsync: deleteRecord, isPending: isDeleting } =
@@ -44,7 +46,7 @@ const LoanDetail = () => {
       <HStack className="p-2 items-center justify-between">
         <VStack>
           <Text className="font-medium">
-            {tCommon("currency.prefix")}
+            {symbol}
             {parseFloat(item.amount ?? "0").toFixed(2)}
           </Text>
           <Text size="xs" className="text-typography-500">
@@ -65,7 +67,7 @@ const LoanDetail = () => {
         </Pressable>
       </HStack>
     ),
-    [tCommon, t],
+    [symbol, t],
   );
 
   if (!id) return null;

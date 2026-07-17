@@ -11,10 +11,12 @@ import { Center } from "@/components/ui/center";
 import { VStack } from "@/components/ui/vstack";
 import { IChart } from "@/types/components/home/chart";
 import { useTranslation } from "react-i18next";
+import { useCurrencyStore } from "@/store/useCurrency";
 
 const Chart = ({ type, month }: IChart) => {
   const { data } = useFetchMonthlyExpenses(month);
   const { t } = useTranslation("home");
+  const symbol = useCurrencyStore((state) => state.symbol);
   const { colorScheme } = useColorScheme();
   // PieChart fakes the donut hole with a solid filled circle — must match the card's bg-background-0
   const innerCircleColor =
@@ -114,7 +116,7 @@ const Chart = ({ type, month }: IChart) => {
         ) : (
           <>
             <Text bold size="lg">
-              {t("chart.total", { total })}
+              {t("chart.total", { total, currency: symbol })}
             </Text>
             <Center>
               <PieChart

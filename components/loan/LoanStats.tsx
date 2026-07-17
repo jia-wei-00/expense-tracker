@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Text } from "@/components/ui/text";
+import { useCurrencyStore } from "@/store/useCurrency";
 import type { ILoanStats } from "@/types/components/loan/loan-stats";
 
 const StatBox = ({
@@ -28,8 +29,7 @@ const StatBox = ({
 
 const LoanStats = ({ totalAmount, paidAmount, remainingAmount }: ILoanStats) => {
   const { t } = useTranslation("loan");
-  const { t: tCommon } = useTranslation("common");
-  const prefix = tCommon("currency.prefix");
+  const prefix = useCurrencyStore((state) => state.symbol);
 
   return (
     <HStack space="md">

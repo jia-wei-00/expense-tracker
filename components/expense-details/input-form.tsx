@@ -3,6 +3,7 @@ import ControlledInput from "@/components/shared/ControlledInput";
 import ControlledRadio from "@/components/shared/ControlledRadio";
 import { VStack } from "@/components/ui/vstack";
 import { useCategory } from "@/hooks/useCategory";
+import { useCurrencyStore } from "@/store/useCurrency";
 import { TExpenseFormProps } from "@/types/components/expense-detail/input-form";
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,7 +11,7 @@ import { useFormContext } from "react-hook-form";
 
 const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
   const { t } = useTranslation("details");
-  const { t: tCommon } = useTranslation("common");
+  const symbol = useCurrencyStore((state) => state.symbol);
   const { data: category } = useCategory();
   const { watch } = useFormContext();
 
@@ -44,7 +45,7 @@ const ExpenseForm = ({ isExpense, children }: TExpenseFormProps) => {
         valueType="number"
         variant="underlined"
         name="amount"
-        prefix={tCommon("currency.prefix")}
+        prefix={symbol}
       />
       <ControlledRadio
         label={t("type")}

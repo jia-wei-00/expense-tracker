@@ -19,5 +19,13 @@
   "validation.max_2_decimals": "Amount must have at most 2 decimal places",
   "validation.must_be_positive": "Amount must be positive",
   "validation.category_required": "Category is required",
-  "validation.type_required": "Type is required"
+  "validation.type_required": "Type is required",
+  "add": "Add",
+  "scan": "Scan receipt",
+  "scan.loading": "Scanning...",
+  "scan.failed": "Could not read the receipt. Please try again or fill in manually.",
+  "scan.source.title": "Scan receipt",
+  "scan.source.description": "Take a photo of the receipt or choose one from your gallery.",
+  "scan.source.camera": "Take photo",
+  "scan.source.gallery": "Choose from gallery"
 }

@@ -22,6 +22,7 @@ import {
   SelectInput,
   SelectItem,
   SelectPortal,
+  SelectScrollView,
   SelectTrigger,
 } from "@/components/ui/select";
 import { Box } from "@/components/ui/box";
@@ -41,6 +42,7 @@ const ControlledDropdown = ({
   isCalendar = false,
   valueType = "string",
   displayValue,
+  scrollable = false,
 }: IControlledDropdown) => {
   const { control } = useFormContext();
   const watchedValue = useWatch({ control, name });
@@ -89,7 +91,10 @@ const ControlledDropdown = ({
                 />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />
               </SelectTrigger>
-              <SelectPortal>
+              {/* snapPoints fixes the sheet height so the inner ScrollView is
+                  bounded and can scroll; without it the sheet grows past the
+                  top of the screen */}
+              <SelectPortal {...(scrollable && { snapPoints: [45] })}>
                 <SelectBackdrop />
                 <SelectContent>
                   <SelectDragIndicatorWrapper>
@@ -110,6 +115,12 @@ const ControlledDropdown = ({
                         style={{ borderRadius: 10 }}
                       />
                     </Box>
+                  ) : scrollable ? (
+                    <SelectScrollView className="flex-1 w-full">
+                      {items?.map(({ label, value }) => (
+                        <SelectItem label={label} value={value} key={value} />
+                      ))}
+                    </SelectScrollView>
                   ) : (
                     items?.map(({ label, value }) => (
                       <SelectItem label={label} value={value} key={value} />

@@ -4,9 +4,11 @@ import Badge from "@/components/shared/Badge";
 import { ILegend } from "@/types/components/home/legend";
 import { HStack } from "@/components/ui/hstack";
 import { useTranslation } from "react-i18next";
+import { useCurrencyStore } from "@/store/useCurrency";
 
 const Legend = ({ pieData, totalExpense }: ILegend) => {
   const { t } = useTranslation("home");
+  const symbol = useCurrencyStore((state) => state.symbol);
 
   return (
     <HStack space="lg" className="flex-wrap">
@@ -23,6 +25,7 @@ const Legend = ({ pieData, totalExpense }: ILegend) => {
                 label: item.label,
                 amount: item.value,
                 percentage,
+                currency: symbol,
               })}
             </Text>
           </HStack>

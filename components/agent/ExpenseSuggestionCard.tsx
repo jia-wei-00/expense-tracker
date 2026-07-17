@@ -8,6 +8,7 @@ import { Input, InputField } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { useCurrencyStore } from "@/store/useCurrency";
 import { IExpenseSuggestionCard } from "@/types/components/agent/expense-suggestion-card";
 
 const ExpenseSuggestionCard = ({
@@ -16,6 +17,7 @@ const ExpenseSuggestionCard = ({
   onRemove,
 }: IExpenseSuggestionCard) => {
   const { t } = useTranslation("common");
+  const symbol = useCurrencyStore((state) => state.symbol);
 
   return (
     <Box className="border border-outline-200 rounded-xl p-3 mb-2 bg-background-50">
@@ -55,7 +57,7 @@ const ExpenseSuggestionCard = ({
         <HStack space="sm" className="items-center">
           <Text className="text-xs text-typography-500 w-16">Amount</Text>
           <HStack className="items-center flex-1">
-            <Text className="text-sm mr-1">{t("currency.prefix")}</Text>
+            <Text className="text-sm mr-1">{symbol}</Text>
             <Input variant="underlined" size="sm" className="flex-1">
               <InputField
                 value={String(suggestion.amount)}

@@ -11,6 +11,7 @@ import { CATEGORY_ICON_MAP } from "@/constants/icon-map";
 import { useDeleteExpense, useExpenseById } from "@/hooks/useExpenses";
 import { categorySchema } from "@/types/constant/icon-map";
 import { safeParseAny } from "@/utils/zod-utils";
+import { useCurrencyStore } from "@/store/useCurrency";
 import dayjs from "dayjs";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
@@ -22,6 +23,7 @@ const ExpenseDetails = () => {
   }>();
 
   const { t } = useTranslation("common");
+  const symbol = useCurrencyStore((state) => state.symbol);
   const [isOpened, setIsOpened] = useState(false);
   const expense = useExpenseById(Number(id));
   const { mutateAsync: deleteExpense, isPending: isDeleting } =
@@ -67,7 +69,7 @@ const ExpenseDetails = () => {
           <HStack space="xs">
             <Text size="4xl" bold className="text-center">
               {prefix}
-              {t("currency.prefix")}
+              {symbol}
             </Text>
             <Text size="4xl" bold className="text-center">
               {expense?.amount}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/store/useSession";
+import { useCurrencyStore } from "@/store/useCurrency";
 import { AI_BASE_URL } from "@/constants/api";
 import storage from "@/lib/storage";
 import {
@@ -177,8 +178,9 @@ export function useChat() {
 
       const parts: string[] = [];
       if (result.toAdd.length > 0) {
+        const symbol = useCurrencyStore.getState().symbol;
         const list = result.toAdd
-          .map((e) => `• ${e.name} — RM ${e.amount.toFixed(2)}`)
+          .map((e) => `• ${e.name} — ${symbol} ${e.amount.toFixed(2)}`)
           .join("\n");
         parts.push(`Saved:\n${list}`);
       }

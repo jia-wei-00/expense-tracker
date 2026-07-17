@@ -7,15 +7,22 @@ import { Divider } from "@/components/ui/divider";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { Box } from "@/components/ui/box";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
 import HistoryItem from "@/components/history/HistoryItem";
+import HistoryFilters from "@/components/history/HistoryFilters";
 import Container from "@/components/shared/Container";
 import ActionSheet from "@/components/shared/ActionSheet";
 import { useTranslation } from "react-i18next";
-import { useInfiniteExpenses, useBulkDeleteExpenses } from "@/hooks/useExpenses";
+import {
+  useInfiniteExpenses,
+  useBulkDeleteExpenses,
+  useExportExpensesCsv,
+} from "@/hooks/useExpenses";
 import type { IExpense } from "@/types/store/useExpenses";
+import type { TExpenseFilters } from "@/types/hooks/use-expense";
 import { Fab, FabIcon } from "@/components/ui/fab";
-import { Plus } from "lucide-react-native";
+import { Plus, Download } from "lucide-react-native";
+import { Icon } from "@/components/ui/icon";
 import { router } from "expo-router";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList<IExpense>);
@@ -27,6 +34,7 @@ const History = () => {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [filters, setFilters] = useState<TExpenseFilters>({ type: "all" });
 
   const {
     data: expensesData,
@@ -35,9 +43,10 @@ const History = () => {
     isFetchingNextPage,
     refetch,
     isRefetching,
-  } = useInfiniteExpenses();
+  } = useInfiniteExpenses(15, filters);
 
   const { mutate: bulkDelete, isPending: isDeleting } = useBulkDeleteExpenses();
+  const { mutate: exportCsv, isPending: isExporting } = useExportExpensesCsv();
 
   const expenses = useMemo(
     () => expensesData?.pages.flat() ?? [],
@@ -102,7 +111,21 @@ const History = () => {
       <Container title={t("transaction.history")}>
         {({ scrollHandler }) => (
           <VStack className="flex-1">
-            <HStack className="justify-end pb-1">
+            <HistoryFilters filters={filters} onChange={setFilters} />
+            <HStack className="justify-end items-center pb-1" space="md">
+              <Button
+                variant="link"
+                size="sm"
+                onPress={() => exportCsv(filters)}
+                isDisabled={isExporting}
+              >
+                {isExporting ? (
+                  <ButtonSpinner />
+                ) : (
+                  <Icon as={Download} size="sm" className="text-typography-700" />
+                )}
+                <ButtonText className="ml-1">{t("export.csv")}</ButtonText>
+              </Button>
               {isSelectMode ? (
                 <Button variant="link" size="sm" onPress={exitSelectMode}>
                   <ButtonText>{t("select.cancel")}</ButtonText>

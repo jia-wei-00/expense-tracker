@@ -15,6 +15,8 @@ import { Fab, FabIcon } from "@/components/ui/fab";
 import { Plus } from "lucide-react-native";
 import { VStack } from "@/components/ui/vstack";
 import Chart from "@/components/home/chart";
+import TrendsChart from "@/components/home/TrendsChart";
+import BudgetProgress from "@/components/home/BudgetProgress";
 import MonthYearPicker from "@/components/home/MonthYearPicker";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSessionStore } from "@/store/useSession";
@@ -38,6 +40,8 @@ const Home = () => {
       await Promise.all([
         queryClient.refetchQueries({ queryKey: [monthKey] }),
         queryClient.refetchQueries({ queryKey: [QUERY_KEY.EXPENSES, userId] }),
+        queryClient.refetchQueries({ queryKey: [QUERY_KEY.TRENDS, userId] }),
+        queryClient.refetchQueries({ queryKey: [QUERY_KEY.BUDGETS, userId] }),
       ]);
     } finally {
       setRefreshing(false);
@@ -58,8 +62,10 @@ const Home = () => {
       >
         <View className="gap-2">
           <MonthYearPicker value={selectedMonth} onChange={setSelectedMonth} />
+          <BudgetProgress month={selectedMonth} />
           <Chart type="expense" month={selectedMonth} />
           <Chart type="income" month={selectedMonth} />
+          <TrendsChart />
           <VStack space="sm">
             <Text size="lg" bold>
               {t("recent.transaction")}

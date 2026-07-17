@@ -19,5 +19,13 @@
   "validation.max_2_decimals": "金额最多可以有2位小数",
   "validation.must_be_positive": "金额必须是正数",
   "validation.category_required": "类别是必填的",
-  "validation.type_required": "类型是必填的"
+  "validation.type_required": "类型是必填的",
+  "add": "添加",
+  "scan": "扫描收据",
+  "scan.loading": "扫描中...",
+  "scan.failed": "无法识别收据，请重试或手动填写。",
+  "scan.source.title": "扫描收据",
+  "scan.source.description": "拍摄收据照片或从相册中选择。",
+  "scan.source.camera": "拍照",
+  "scan.source.gallery": "从相册选择"
 }

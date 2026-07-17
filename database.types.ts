@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget: {
+        Row: {
+          amount: number
+          category: number | null
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: number | null
+          created_at?: string
+          id?: number
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          category?: number | null
+          created_at?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "expense_category"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_message: {
         Row: {
           created_at: string
@@ -197,6 +229,53 @@ export type Database = {
           },
         ]
       }
+      recurring_expense: {
+        Row: {
+          amount: number
+          category: number
+          created_at: string
+          day_of_month: number
+          id: number
+          is_active: boolean
+          is_expense: boolean
+          last_run_date: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: number
+          created_at?: string
+          day_of_month: number
+          id?: number
+          is_active?: boolean
+          is_expense?: boolean
+          last_run_date?: string | null
+          name: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          category?: number
+          created_at?: string
+          day_of_month?: number
+          id?: number
+          is_active?: boolean
+          is_expense?: boolean
+          last_run_date?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expense_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "expense_category"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_pending_actions: {
         Row: {
           actions: Json
@@ -262,6 +341,7 @@ export type Database = {
           total_income: number
         }[]
       }
+      process_recurring_expenses: { Args: never; Returns: undefined }
       set_push_token: {
         Args: { p_platform?: string; p_token: string }
         Returns: undefined

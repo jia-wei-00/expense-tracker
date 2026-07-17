@@ -10,4 +10,5 @@ export interface IControlledDropdown {
   isCalendar?: boolean;
   valueType?: TValueType;
   displayValue?: string;
+  scrollable?: boolean;
 }

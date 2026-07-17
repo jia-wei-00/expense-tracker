@@ -12,14 +12,14 @@ import { Heading } from "@/components/ui/heading";
 import { Icon } from "@/components/ui/icon";
 import { parseExpensePush } from "@/lib/expensePush";
 import { TPushExpenseItem } from "@/types/notification";
+import { useCurrencyStore } from "@/store/useCurrency";
 
 export default function NotificationSummaryScreen() {
   const { t } = useTranslation("notification");
-  const { t: tCommon } = useTranslation("common");
   const { payload } = useLocalSearchParams<{ payload?: string }>();
 
   const data = parseExpensePush(payload);
-  const rm = tCommon("currency.prefix");
+  const rm = useCurrencyStore((state) => state.symbol);
 
   if (!data) {
     return (

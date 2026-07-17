@@ -11,8 +11,14 @@ import { useSessionStore } from "@/store/useSession";
 import { IExpense, TAddExpense } from "@/types/store/useExpenses";
 import { QUERY_KEY } from "@/constants/query-key";
 import dayjs from "dayjs";
-import { TMonthlySummary } from "@/types/hooks/use-expense";
+import {
+  TExpenseFilters,
+  TMonthlySummary,
+  TTrendPoint,
+} from "@/types/hooks/use-expense";
 import { useErrorToast } from "@/hooks/useErrorToast";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 import { useTranslation } from "react-i18next";
 
@@ -69,19 +75,57 @@ export const useFetchMonthlyExpenses = (month: string | Date) => {
   });
 };
 
+export const hasActiveExpenseFilters = (filters?: TExpenseFilters) =>
+  !!filters &&
+  (!!filters.search ||
+    (!!filters.type && filters.type !== "all") ||
+    !!filters.startDate ||
+    !!filters.endDate);
+
+const buildFilteredExpenseQuery = (filters?: TExpenseFilters) => {
+  let query = supabase
+    .from("expense")
+    .select("*,category(name)")
+    .order("spend_date", { ascending: false });
+
+  if (filters?.search) query = query.ilike("name", `%${filters.search}%`);
+  if (filters?.type === "expense") query = query.eq("is_expense", true);
+  if (filters?.type === "income") query = query.eq("is_expense", false);
+  if (filters?.startDate) {
+    query = query.gte(
+      "spend_date",
+      dayjs(filters.startDate).startOf("day").toISOString(),
+    );
+  }
+  if (filters?.endDate) {
+    query = query.lte(
+      "spend_date",
+      dayjs(filters.endDate).endOf("day").toISOString(),
+    );
+  }
+
+  return query;
+};
+
 export const useInfiniteExpenses = (
   limit = 15,
+  filters?: TExpenseFilters,
 ): UseInfiniteQueryResult<InfiniteData<IExpense[]>, Error> => {
   const userId = useSessionStore((state) => state.getUserId());
 
+  // Realtime subscriptions only patch the unfiltered cache entry, so filtered
+  // views get their own key and refresh through normal staleTime/invalidation.
+  const queryKey = hasActiveExpenseFilters(filters)
+    ? [QUERY_KEY.EXPENSES, userId, filters]
+    : [QUERY_KEY.EXPENSES, userId];
+
   return useInfiniteQuery({
-    queryKey: [QUERY_KEY.EXPENSES, userId],
+    queryKey,
     queryFn: async ({ pageParam = 0 }) => {
-      const { data, error } = await supabase
-        .from("expense")
-        .select("*,category(name)")
-        .order("spend_date", { ascending: false })
-        .range(pageParam * limit, (pageParam + 1) * limit - 1);
+      const { data, error } = await buildFilteredExpenseQuery(filters).range(
+        pageParam * limit,
+        (pageParam + 1) * limit - 1,
+      );
 
       if (error) throw error;
 
@@ -97,6 +141,86 @@ export const useInfiniteExpenses = (
     },
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useFetchExpenseTrends = (months = 6) => {
+  const userId = useSessionStore((state) => state.getUserId());
+
+  return useQuery({
+    queryKey: [QUERY_KEY.TRENDS, userId, months],
+    queryFn: async () => {
+      const start = dayjs()
+        .subtract(months - 1, "month")
+        .startOf("month");
+
+      const { data, error } = await supabase
+        .from("expense")
+        .select("amount,is_expense,spend_date")
+        .gte("spend_date", start.toISOString());
+
+      if (error) throw error;
+
+      const buckets = Array.from({ length: months }, (_, i) =>
+        start.add(i, "month").format("YYYY-MM"),
+      );
+      const totals = new Map<string, TTrendPoint>(
+        buckets.map((month) => [month, { month, expense: 0, income: 0 }]),
+      );
+
+      for (const row of data ?? []) {
+        const point = totals.get(dayjs(row.spend_date).format("YYYY-MM"));
+        if (!point) continue;
+        if (row.is_expense) point.expense += Number(row.amount ?? 0);
+        else point.income += Number(row.amount ?? 0);
+      }
+
+      return buckets.map((month) => totals.get(month)!);
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useExportExpensesCsv = () => {
+  const { showError } = useErrorToast();
+  const { t } = useTranslation("common");
+
+  return useMutation({
+    mutationFn: async (filters?: TExpenseFilters) => {
+      const { data, error } = await buildFilteredExpenseQuery(filters);
+      if (error) throw error;
+
+      const escapeCell = (value: unknown) =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+      const header = ["Date", "Name", "Category", "Type", "Amount"];
+      const rows = (data ?? []).map((expense) =>
+        [
+          expense.spend_date
+            ? dayjs(expense.spend_date).format("YYYY-MM-DD")
+            : "",
+          expense.name,
+          expense.category?.name ?? "",
+          expense.is_expense ? "Expense" : "Income",
+          expense.amount,
+        ]
+          .map(escapeCell)
+          .join(","),
+      );
+      const csv = [header.join(","), ...rows].join("\n");
+
+      const file = new File(
+        Paths.cache,
+        `transactions-${dayjs().format("YYYY-MM-DD")}.csv`,
+      );
+      if (file.exists) file.delete();
+      file.create();
+      file.write(csv);
+
+      await Sharing.shareAsync(file.uri, { mimeType: "text/csv" });
+    },
+    onError: () => showError(t("error.generic")),
   });
 };
 

@@ -13,6 +13,7 @@ import "react-native-reanimated";
 import "@/i18n";
 
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import AppLockGate from "@/components/shared/AppLockGate";
 import "@/global.css";
 import { useAuthStore } from "@/store/useAuth";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -47,20 +48,36 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
-            <Stack>
-              <Stack.Protected guard={!session}>
-                <Stack.Screen name="login" />
-              </Stack.Protected>
+            <AppLockGate>
+              <Stack>
+                <Stack.Protected guard={!session}>
+                  <Stack.Screen name="login" />
+                </Stack.Protected>
 
-              <Stack.Protected guard={!!session}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="expense" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="modal"
-                  options={{ presentation: "modal", title: "Modal" }}
-                />
-              </Stack.Protected>
-            </Stack>
+                <Stack.Protected guard={!!session}>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="expense"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="budget"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="recurring"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="modal"
+                    options={{ presentation: "modal", title: "Modal" }}
+                  />
+                </Stack.Protected>
+              </Stack>
+            </AppLockGate>
           </QueryClientProvider>
         </SafeAreaProvider>
         <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />

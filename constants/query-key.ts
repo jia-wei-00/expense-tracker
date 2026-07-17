@@ -5,4 +5,7 @@ export const QUERY_KEY = {
   LOANS: "loans",
   LOAN_RECORDS: "loan_records",
   WHATSAPP_USER: "whatsapp_user",
+  TRENDS: "trends",
+  BUDGETS: "budgets",
+  RECURRING: "recurring",
 };

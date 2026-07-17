@@ -7,4 +7,6 @@ export default {
   agent: require("@/i18n/locales/en-US/agent.json"),
   settings: require("@/i18n/locales/en-US/settings.json"),
   notification: require("@/i18n/locales/en-US/notification.json"),
+  budget: require("@/i18n/locales/en-US/budget.json"),
+  recurring: require("@/i18n/locales/en-US/recurring.json"),
 };

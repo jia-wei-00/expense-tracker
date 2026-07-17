@@ -11,7 +11,7 @@ import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import dayjs from "dayjs";
 import { router } from "expo-router";
-import { useTranslation } from "react-i18next";
+import { useCurrencyStore } from "@/store/useCurrency";
 
 const TransactionItem = ({
   id,
@@ -23,7 +23,7 @@ const TransactionItem = ({
   pressable,
   test,
 }: IExpense) => {
-  const { t } = useTranslation("common");
+  const symbol = useCurrencyStore((state) => state.symbol);
   const safeCategory = safeParseAny(categorySchema, category, "Others");
   const IconComponent = CATEGORY_ICON_MAP[safeCategory];
 
@@ -54,7 +54,7 @@ const TransactionItem = ({
           <Text
             className={is_expense ? "text-typography-600" : "text-success-600"}
           >
-            {t("currency.prefix")}
+            {symbol}
             {amount}
           </Text>
         </HStack>
